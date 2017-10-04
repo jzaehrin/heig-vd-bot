@@ -2,7 +2,7 @@
 require 'rubygems'
 require 'telegram/bot'
 
-token = '456606561:AAHmqy8Dg91l1xbSNpxMQgZiFc6mvQPpemw'
+token = 'token_here'
 
 Telegram::Bot::Client.run(token) do |bot|
   bot.listen do |message|
