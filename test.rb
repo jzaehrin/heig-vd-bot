@@ -1,6 +1,6 @@
 require 'calendar'
 
 test = Calendar.new("test")
-puts test.cal
-test.add(start: "20050428",end: "20050429",summary: "test")
-test.update
+
+test.add(start: DateTime.new(2001,2,3,0,0,0), summary: "test", duration: 130, description: "Bla bla bla")
+test.push
