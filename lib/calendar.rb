@@ -55,5 +55,5 @@ class Calendar
     end
 end
 
-def calendar_concat(list)
+def calendar_concat()
 end
