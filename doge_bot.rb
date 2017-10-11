@@ -1,4 +1,4 @@
-require 'bot.rb'
+require './bot'
 
 class DogeBot < Bot
     @run = lambda { |bot|

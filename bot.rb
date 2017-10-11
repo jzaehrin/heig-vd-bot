@@ -11,7 +11,9 @@ class Bot
         @token = token
         @config_file = config_file
 
-        load_config()
+        if @config_file 
+            load_config()
+        end
     end
 
     def load_config
@@ -26,9 +28,13 @@ class Bot
         @bot.api.send_photo(chat_id: message.chat.id, photo: photo)
     end
 
-    def send_broadcast(text)
-        @config[:broadcast].map do |id|
+    def send_broadcast(list, text)
+        list.map do |id|
             @bot.api.send_message(chat_id: id, text: text)
         end
+    end
+
+    def destroy
+        @bot
     end
 end

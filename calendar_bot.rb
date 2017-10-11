@@ -1,4 +1,4 @@
-require 'bot.rb'
+require './bot'
 
 class CalendarBot < Bot
     @run = lambda { |bot|
