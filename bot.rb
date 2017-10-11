@@ -7,11 +7,12 @@ class Bot
         raise "Don't do dat !!"
     end
 
-    def initialize(token, config_file)
+    def initialize(token, config_file = nil)
         @token = token
-        @config_file = config_file
 
-        if @config_file 
+        if config_file 
+            @config_file = config_file
+
             load_config()
         end
     end
