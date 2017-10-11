@@ -34,7 +34,7 @@ class CalendarBot < Bot
             bot.listen do |message|
                 case message.text
                 when '/!set_admin'
-                    if @config[:admin] then
+                    if @config["admin"] then
                         reponse(message, "The admin channel has already set !")
                     end
                     reponse(message, "This channel has been set to admin")
