@@ -1,11 +1,9 @@
 require 'json'
+require 'abstraction'
 
 class Bot
+    abstract
     attr_reader :token, :bot, :config_file, :config
-
-    def self.new
-        raise "Don't do dat !!"
-    end
 
     def initialize(token, config_file = nil)
         @token = token
