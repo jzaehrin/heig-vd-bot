@@ -18,7 +18,7 @@ class Bot
     end
 
     def load_config
-        @config = JSON.parse(@config_file)
+        @config = JSON.parse(File.read(@config_file))
     end
 
     def reponse(message, text)
