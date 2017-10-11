@@ -21,8 +21,8 @@ class CalendarBot < Bot
         end
     }
 
-    def initialize
-        super
+    def initialize(token, config_file = nil)
+        super(token, config_file)
 
         run()
     end

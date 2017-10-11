@@ -5,7 +5,7 @@ require 'json'
 require './calendar_bot'
 require './doge_bot'
 
-token = JSON.parse(File.read("./ressource/config/default.json"))[:token]; 
+token = JSON.parse(File.read("./ressources/config/default.json"))[:token]; 
 
-CalendarBot.new(token, "./ressource/config/calendar.json")
+CalendarBot.new(token, "./ressources/config/calendar.json")
 DogeBot.new(token)
