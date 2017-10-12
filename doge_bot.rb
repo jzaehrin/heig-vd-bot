@@ -11,7 +11,7 @@ class DogeBot < Bot
         when Telegram::Bot::Types::CallbackQuery
         # Here you can handle your callbacks from inline buttons
             if message.data == 'touch'
-              @bot.api.send_message(chat_id: message.from.id, text: "Don't touch me!")
+              reponseFrom(message, "Don't touch me!")
             end
         when Telegram::Bot::Types::Message
             kb = [
@@ -20,7 +20,7 @@ class DogeBot < Bot
               Telegram::Bot::Types::InlineKeyboardButton.new(text: 'Switch to inline', switch_inline_query: 'some text')
             ]
             markup = Telegram::Bot::Types::InlineKeyboardMarkup.new(inline_keyboard: kb)
-            @bot.api.send_message(chat_id: message.chat.id, text: 'Make a choice', reply_markup: markup)
+            reponse(message, 'Make a choice', markup)
         end
     end
 end

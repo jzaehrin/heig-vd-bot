@@ -12,5 +12,5 @@ doge_bot = DogeBot.new(api)
 
 calendar_bot = CalendarBot.new(api)
 
-api.listen(calendar_bot)
+api.listen(doge_bot)
 
