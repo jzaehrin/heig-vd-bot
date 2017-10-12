@@ -11,8 +11,8 @@ class Bot
     end
 
 
-    def reponse(message, text)
-        @bot.api.send_message(chat_id: message.chat.id, text: text)
+    def reponse(message, text, reply_markup = nil)
+        @bot.api.send_message(chat_id: message.chat.id, text: text, reply_markup: reply_markup)
     end
 
     def response_photo(message, photo)
