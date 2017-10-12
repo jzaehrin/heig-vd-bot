@@ -15,7 +15,7 @@ class DogeBot < Bot
             if message.data == 'touch'
               bot.api.send_message(chat_id: message.from.id, text: "Don't touch me!")
             end
-        when Telegram::Bot::Types::Message
+        when 'add'
             kb = [
               Telegram::Bot::Types::InlineKeyboardButton.new(text: 'Go to Google', url: 'https://google.com'),
               Telegram::Bot::Types::InlineKeyboardButton.new(text: 'Touch me', callback_data: 'touch'),
