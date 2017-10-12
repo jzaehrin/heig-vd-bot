@@ -1,4 +1,3 @@
-require 'thread'
 require 'rubygems'
 require 'telegram/bot'
 require 'json'
