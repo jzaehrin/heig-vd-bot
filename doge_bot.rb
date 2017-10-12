@@ -11,7 +11,7 @@ class DogeBot < Bot
         when Telegram::Bot::Types::CallbackQuery
             # Here you can handle your callbacks from inline buttons
             if message.data == 'touch'
-              bot.api.send_message(chat_id: message.from.id, text: "Don't touch me!")
+                reponse(message, "Don't touch me!")
             end
         when Telegram::Bot::Types::Message
             kb = [
