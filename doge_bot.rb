@@ -8,14 +8,12 @@ class DogeBot < Bot
 
     def listen(message)
         case message
-        when '/doge'
-            bot.api.send_photo(chat_id: message.chat.id, photo: "https://i.pinimg.com/736x/5e/47/a3/5e47a3c6c1f85255c9e32f294a3dd173--doge-meme-portal.jpg")
         when Telegram::Bot::Types::CallbackQuery
             # Here you can handle your callbacks from inline buttons
             if message.data == 'touch'
               bot.api.send_message(chat_id: message.from.id, text: "Don't touch me!")
             end
-        when 'add'
+        when Telegram::Bot::Types::Message
             kb = [
               Telegram::Bot::Types::InlineKeyboardButton.new(text: 'Go to Google', url: 'https://google.com'),
               Telegram::Bot::Types::InlineKeyboardButton.new(text: 'Touch me', callback_data: 'touch'),
