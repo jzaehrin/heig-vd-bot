@@ -8,11 +8,6 @@ class DogeBot < Bot
 
     def listen(message)
         case message
-        when Telegram::Bot::Types::CallbackQuery
-            # Here you can handle your callbacks from inline buttons
-            if message.data == 'touch'
-                reponse(message, "Don't touch me!")
-            end
         when Telegram::Bot::Types::Message
             kb = [
               Telegram::Bot::Types::InlineKeyboardButton.new(text: 'Go to Google', url: 'https://google.com'),
