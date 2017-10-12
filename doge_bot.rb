@@ -13,7 +13,7 @@ class DogeBot < Bot
             if message.data == 'touch'
               reponseFrom(message, "Don't touch me!")
             end
-        when Telegram::Bot::Types::Message
+        when message.respond_to?('text') && message.text == 'caca'
             kb = [
               Telegram::Bot::Types::InlineKeyboardButton.new(text: 'Go to Google', url: 'https://google.com'),
               Telegram::Bot::Types::InlineKeyboardButton.new(text: 'Touch me', callback_data: 'touch'),
