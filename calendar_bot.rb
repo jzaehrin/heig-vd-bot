@@ -1,5 +1,4 @@
 require './bot'
-require 'calendar'
 
 class CalendarBot < Bot
 
