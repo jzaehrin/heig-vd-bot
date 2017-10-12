@@ -23,6 +23,9 @@ class CalendarBot < Bot
             when /^\/add_event ([A-Z]+)/
                 reponse(message, "Add event in #$1")
             end
+            when '/add_event'
+                reponse(message, "Where ?", Telegram::Bot::Types::ForceReply.new())
+            end
         end
     end
 end
