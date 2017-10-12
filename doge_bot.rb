@@ -20,7 +20,7 @@ class DogeBot < Bot
               Telegram::Bot::Types::InlineKeyboardButton.new(text: 'Switch to inline', switch_inline_query: 'some text')
             ]
             markup = Telegram::Bot::Types::InlineKeyboardMarkup.new(inline_keyboard: kb)
-           response(message, "Make a choice", markup)
+            reponse(message, "Make a choice", markup)
         end
     end
 end
