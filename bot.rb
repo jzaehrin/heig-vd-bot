@@ -15,8 +15,21 @@ class Bot
         @bot.api.send_message(chat_id: message.chat.id, text: text, reply_markup: reply_markup)
     end
 
-    def reponseFrom(message, text)
-        @bot.api.send_message(chat_id: message.from.id, text: text)
+    def reponseFrom(message, text, reply_markup = nil)
+        @bot.api.send_message(chat_id: message.from.id, text: text, reply_markup: reply_markup)
+    end
+
+    def deleteMessage(message)
+        @bot.api.delete_message(chat_id: message.from.id, message_id: message.message_id)
+    end
+
+    def editKb(message, reply_markup)
+        @bot.api.edit_message_reply_markup(chat_id: message.chat.id, message_id: message.message_id, reply_markup: reply_markup)
+    end
+
+    def deleteKb(chat_id, message_id)
+        markup = Telegram::Bot::Types::InlineKeyboardMarkup.new(inline_keyboard: [])
+        @bot.api.edit_message_reply_markup(chat_id: chat_id, message_id: message_id, reply_markup: markup)
     end
 
     def response_photo(message, photo)
