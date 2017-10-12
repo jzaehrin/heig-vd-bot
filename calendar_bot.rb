@@ -1,4 +1,5 @@
 require './bot'
+require 'calendar'
 
 class CalendarBot < Bot
 
@@ -19,6 +20,8 @@ class CalendarBot < Bot
             reponse(message, "Hello, #{message.from.first_name}!")
         when '/add_calendar'
             reponse(message, "TODO")
+        when /^\/add_event ([A-Z]+)/
+            reponse(message, "Add event in #$1")
         end
     end
 end
