@@ -5,19 +5,11 @@ class Bot
     abstract
     attr_reader :token, :bot, :config_file, :config
 
-    def initialize(token, config_file = nil)
-        @token = token
-
-        if config_file 
-            @config_file = config_file
-
-            load_config()
-        end
+    def initialize(api)
+        @api = api
+        @bot = @api.bot
     end
 
-    def load_config
-        @config = JSON.parse(File.read(@config_file))
-    end
 
     def reponse(message, text)
         @bot.api.send_message(chat_id: message.chat.id, text: text)

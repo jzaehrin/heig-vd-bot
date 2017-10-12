@@ -3,10 +3,12 @@ require 'rubygems'
 require 'telegram/bot'
 require 'json'
 require './calendar_bot'
+require './doge_bot'
 require './api'
 
 api = Api.new("./ressources/config/default.json")
-api.run()
-calendar_bot = CalendarBot.new(api.bot)
-calendar_bot.listen
+api.run
+doge_bot = DogeBot.new(api)
+calendar_bot = CalendarBot.new(api)
+api.listen(calendar_bot, doge_bot)
 

@@ -7,7 +7,8 @@ class Api
     def initialize(config_file)       
         @config_file = config_file
         load_config()
-        @token = @config["token"]; 
+        @token = @config["token"];
+        @bot
     end
 
     def load_config
@@ -15,23 +16,16 @@ class Api
     end
 
     def run
-        @bot = Telegram::Bot::Client.run(@token)
-
-    def reponse(message, text)
-        @bot.api.send_message(chat_id: message.chat.id, text: text)
-    end
-
-    def response_photo(message, photo)
-        @bot.api.send_photo(chat_id: message.chat.id, photo: photo)
-    end
-
-    def send_broadcast(list, text)
-        list.map do |id|
-            @bot.api.send_message(chat_id: id, text: text)
+        Telegram::Bot::Client.run(token) do |bot|
+            @bot = bot
         end
     end
 
-    def destroy
-        @bot
+    def listen(*bots)
+        @bot.listen do |message|
+            bots.each do |bot|
+                bot.listen(message)
+            end
+        end
     end
 end
