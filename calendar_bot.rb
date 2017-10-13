@@ -40,8 +40,8 @@ class CalendarBot < Bot
                 reponse(message, "TODO")
             when /^\/add_event ([A-Z]+)/
                 reponse(message, "Add event in #$1")
-            when '/add_event'
-                reponse(message, "Which class subject ?", Telegram::Bot::Types::ForceReply.new(force_reply: true, selective: true))
+            when '/add_event' # a way using force_reply, and  
+                reponse(message, "Which class subject ?", Telegram::Bot::Types::ForceReply.new(force_reply: true))
             when '/add_even'
                 markup = Telegram::Bot::Types::InlineKeyboardMarkup.new(inline_keyboard: [])
                 sendMessage = Telegram::Bot::Types::Message.new(reponse(message, "Which class subject ?", markup)['result'])
