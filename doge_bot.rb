@@ -16,8 +16,7 @@ class DogeBot < Bot
         when Telegram::Bot::Types::Message
             if(message.text == '/kb')
                 kb = [
-                  Telegram::Bot::Types::InlineKeyboardButton.new(text: 'Go to Google', url: 'https://google.com'),
-                  Telegram::Bot::Types::InlineKeyboardButton.new(text: 'Touch me', callback_data: 'touch'),
+                  [Telegram::Bot::Types::InlineKeyboardButton.new(text: 'Go to Google', url: 'https://google.com'), Telegram::Bot::Types::InlineKeyboardButton.new(text: 'Touch me', callback_data: 'touch')],
                   Telegram::Bot::Types::InlineKeyboardButton.new(text: 'Switch to inline', switch_inline_query: 'some text')
                 ]
                 markup = Telegram::Bot::Types::InlineKeyboardMarkup.new(inline_keyboard: kb)
