@@ -9,7 +9,14 @@ class CalendarBot < Bot
     end
 
     def create_calendar_ikb(month, year)
-        month_header = [[['<', "change_month " + (month.to_i-1).to_s + " " + (year).to_s],[month.to_s + "." + year.to_s, ' '], ['>', "change_month " + (month.to_i+1).to_s + " " + (year).to_s]]]
+        if month.to_i > 12
+            month = 1
+            year = year.to_i + 1
+        elsif month.to_i < 1
+            month = 12
+            year = year.to_i - 1
+        end
+        month_header = [[['<', "change_month " + (month.to_i-1).to_s + " " + year.to_s],[month.to_s + "." + year.to_s, ' '], ['>', "change_month " + (month.to_i+1).to_s + " " + year.to_s]]]
         first_day = Date.new(year.to_i,month.to_i,1).cwday
         days_woffset = [' '] * (first_day-1) + [*1..31] + [' '] * ( (12-first_day) % 7 )
         month_header + @days_header + days_woffset.zip(days_woffset).each_slice(7).to_a
