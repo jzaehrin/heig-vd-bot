@@ -16,7 +16,7 @@ class Api
     end
 
     def run
-        Telegram::Bot::Client.run(token) do |bot|
+        Telegram::Bot::Client.run(@token) do |bot|
             @bot = bot
         end
     end
