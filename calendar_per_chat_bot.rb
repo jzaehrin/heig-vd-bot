@@ -8,7 +8,7 @@ class CalendarPerChatBot < PerChatBot
     end
 
     def new_worker(chat_id)
-        @workers = {chat_id => CalendarWorker.new(chat_id)}
+        @workers = {chat_id => CalendarWorker.new(chat_id,self)}
     end
     
     class CalendarWorker < PerChatBot::Worker
@@ -16,8 +16,8 @@ class CalendarPerChatBot < PerChatBot
         @@subject = ['INF1', 'ARO1', 'WTF3']
         @@days_header = [['Mon','Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].zip([' ']*7)]
 
-        def initialize(chat_id)
-            super(chat_id)
+        def initialize(chat_id, per_chat_bot)
+            super(chat_id, per_chat_bot)
             @adding_event = Hash.new
         end
 
@@ -33,6 +33,10 @@ class CalendarPerChatBot < PerChatBot
             case message.text
             when '/ok'
                 reponse("ko")
+            when '/myId'
+                reponse(message.from.id.to_s+" "+@chat_id.to_s)
+            when '/myUsername'
+                reponse(message.from.username.to_s)
             when '/add_event'
                 kbId = generate_ikb("Which class subject ?", @@subject.zip(@@subject).each_slice(3).to_a)['result']['message_id']
                 @adding_event = {kbId: kbId.to_s}

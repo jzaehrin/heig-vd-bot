@@ -28,8 +28,9 @@ class PerChatBot < Bot
     class Worker < Bot
         abstract
 
-        def initialize(chat_id)
+        def initialize(chat_id, per_chat_bot)
             @chat_id = chat_id
+            @per_chat_bot = per_chat_bot
         end
 
         def listen(message)
@@ -46,23 +47,27 @@ class PerChatBot < Bot
         end
 
         def reponse(text, reply_markup=nil)
-            super(@chat_id.to_i, text, reply_markup)
+            @per_chat_bot.reponse(@chat_id.to_i, text, reply_markup)
+        end
+
+        def reponse_test(text, reply_markup=nil)
+            @per_chat_bot.reponse("@jzaehrin", text, reply_markup)
         end
 
         def delete_message(message_id)
-            super(@chat_id, message_id)
+            @per_chat_bot.delete_message(@chat_id, message_id)
         end
 
         def edit_markup(message_id, reply_markup=nil)
-            super(@chat_id, message_id, reply_markup)
+            @per_chat_bot.edit_markup(@chat_id, message_id, reply_markup)
         end
 
         def delete_kb(message_id)
-            super(@chat_id, message_id)
+            @per_chat_bot.delete_kb(@chat_id, message_id)
         end
 
         def response_photo(photo)
-            super(@chat_id, photo)
+            @per_chat_bot.response_photo(@chat_id, photo)
         end
 
         def generate_ikb(text, buttons_infos)
