@@ -31,7 +31,7 @@ class Bot
     end
 
     def delete_kb(chat_id, message_id)
-        @api.edit_message_reply_markup(chat_id: chat_id, message_id: message_id, reply_markup: @@Markup_empty)
+        @api.edit_message_reply_markup(chat_id: chat_id, message_id: message_id, reply_markup: @Markup_empty)
     end
 
     def response_photo(chat_id, photo)
