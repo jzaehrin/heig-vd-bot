@@ -58,7 +58,7 @@ class PerChatBot < Bot
 	            }
 	        }
 	        markup = Telegram::Bot::Types::InlineKeyboardMarkup.new(inline_keyboard: kb)
-	        reponse(text, markup)['result']['message_id'] #returning only message_id from the new ikb
+	        reponse(text, markup) # returning the message sent with the new ikb
 	    end
 
 	    def edit_ikb(message_id, buttons_infos)

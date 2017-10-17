@@ -35,7 +35,7 @@ class CalendarPerChatBot < PerChatBot
             when '/ok'
                 reponse("ko")
             when '/add_event'
-                kbId = generate_ikb("Which class subject ?", @@subject.zip(@@subject).each_slice(3).to_a)
+                kbId = generate_ikb("Which class subject ?", @@subject.zip(@@subject).each_slice(3).to_a)['result']['message_id']
                 @adding_event = {kbId: kbId.to_s}
             end
         end
