@@ -2,12 +2,13 @@ require 'json'
 require 'abstraction'
 
 class Api
-    attr_reader :token, :bot, :config_file, :config
+    attr_reader :token, :bot, :config_file, :config, :id
 
-    def initialize(config_file)       
-        @config_file = config_file
+    def initialize(config_path, id)       
+        @id = id
+        @config_file = config_path + "default." + @id + ".json"
         load_config()
-        @token = @config["token"];
+        @token = @config["token"]
         @bot
     end
 

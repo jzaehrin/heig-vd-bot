@@ -4,8 +4,8 @@ require './bot'
 class PerChatBot < Bot
     abstract
 
-    def initialize(api)
-        super(api)
+    def initialize(config_path, config_name, api)
+    	super(config_path, config_name, api)
         @workers = Hash.new
     end
 

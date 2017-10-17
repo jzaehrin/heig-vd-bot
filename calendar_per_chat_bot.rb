@@ -3,8 +3,8 @@ require './calendar'
 
 class CalendarPerChatBot < PerChatBot
 
-    def initialize(api)
-        super(api)
+    def initialize(config_path, api)
+        super(config_path, "calendar", api)
     end
 
     def new_worker(chat_id)
