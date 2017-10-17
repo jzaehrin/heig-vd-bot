@@ -50,10 +50,6 @@ class PerChatBot < Bot
             @per_chat_bot.reponse(@chat_id.to_i, text, reply_markup)
         end
 
-        def reponse_test(text, reply_markup=nil)
-            @per_chat_bot.reponse("@jzaehrin", text, reply_markup)
-        end
-
         def delete_message(message_id)
             @per_chat_bot.delete_message(@chat_id, message_id)
         end
