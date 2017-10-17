@@ -21,7 +21,10 @@ class CalendarPerChatBot < PerChatBot
         def initialize(chat_id, per_chat_bot)
             super(chat_id, per_chat_bot)
             @adding_event = Hash.new
-            @admin = @per_chat_bot.admin?(@chat_id.to_s)
+        end
+
+        def admin?
+            @per_chat_bot.admin?(@chat_id.to_s)
         end
 
         def listen(message)
@@ -34,39 +37,63 @@ class CalendarPerChatBot < PerChatBot
 
         def listen_text(message)
             case message.text
-            when '/ok'
-                reponse("ko")
-            when '/myId'
-                reponse(message.from.id.to_s+" "+@chat_id.to_s)
-            when /\/isAdmin (.+)/ # test with chat id
-                case $1
-                when /^(\d+)/
-                    reponse(@per_chat_bot.admin?($1))
-                when /^([a-zA-Z0-9]{4,})/ # test with username
-                    reponse(@per_chat_bot.username_admin?($1))
+            when /\/admin ([a-zA-Z0-9]{8})/
+                if admin?
+                    reponse("You already are an admin for this bot ;) !")
+                else
+                    if @per_chat_bot.match_admin(@chat_id.to_s,message.from.username.to_s,$1.to_s)
+                        reponse("Congrats! You're now a admin of this bot.")
+                    else
+                        reponse("Sorry, but you were not invited to become an admin of this bot.")
+                    end
                 end
-            when /\/ls (.+)/ # test with chat id
-                case $1
-                when 'admins'
-                    text = "Admins list:\nusername\tchat_id\n"
-                    @per_chat_bot.list_admins().each{|admin| text+= admin.first + "\t" + admin.last + "\n"}
-                    reponse(text)
-                when 'invitations'
-                    text = "Admins invitations list:\nusername\tchat_id\n" + @per_chat_bot.list_invited_admin().to_s
-                    reponse(text)
-                end
-            when '/myUsername'
-                reponse(message.from.username.to_s)
-            when '/add_event'
-                kbId = generate_ikb("Which class subject ?", @@subject.zip(@@subject).each_slice(3).to_a)['result']['message_id']
-                @adding_event = {kbId: kbId.to_s}
-            when /\/add_admin ([a-zA-Z0-9]{4,})/
-                if @admin 
-                     
-                    o = [('a'..'z'), ('A'..'Z'), ('0'..'9')].map(&:to_a).flatten
-                    password = (0...8).map { o[rand(o.length)] }.join
-                    @per_chat_bot.add_admin($1,password)
-                    reponse("#$1 invited with key #{password.to_s}.")
+            end
+            if admin?
+                case message.text
+                when '/add_event' # step one : ask for a subject
+                    kbId = generate_ikb("Which class subject ?", (@@subject+["Cancel"]).zip((@@subject+["Cancel"])).each_slice(4).to_a)['result']['message_id']
+                    @adding_event = {kbId: kbId.to_s}
+                # --- SUPER ADMIN ---
+                when /\/ls (.+)/
+                    case $1
+                    when 'admins'
+                        text = "Admins list:\nusername\tchat_id\n"
+                        @per_chat_bot.list_admins().each{|admin| text+= admin.first + "\t" + admin.last + "\n"}
+                        reponse(text)
+                    when 'invitations'
+                        text = "Admins invitations list:\nusername\tchat_id\n" + @per_chat_bot.list_invited_admin().to_s
+                        reponse(text)
+                    end
+                when /\/isAdmin (.+)/ # test with chat id
+                    case $1
+                    when /^(\d+)/
+                        reponse(@per_chat_bot.admin?($1))
+                    when /^([a-zA-Z0-9]{4,})/ # test with username
+                        reponse(@per_chat_bot.username_admin?($1))
+                    end
+                when /\/add_admin ([a-zA-Z0-9]{4,})/
+                    if admin?  
+                        o = [('a'..'z'), ('A'..'Z'), ('0'..'9')].map(&:to_a).flatten
+                        password = (0...8).map { o[rand(o.length)] }.join
+                        @per_chat_bot.add_admin($1,password)
+                        reponse("#$1 invited with key #{password.to_s}.")
+                    end
+                when /\/remove_invitation ([a-zA-Z0-9]{4,})/
+                    if admin?
+                        if @per_chat_bot.remove_invited_admin($1) 
+                            reponse("#$1 invitation removed.")
+                        else
+                            reponse("#$1 wasn't on the list!")
+                        end
+                    end
+                when /\/remove_admin ([a-zA-Z0-9]{4,})/
+                    if admin?
+                        if @per_chat_bot.remove_admin($1) 
+                            reponse("#$1 is not an admin anymore.")
+                        else
+                            reponse("#$1 wasn't on the admins list!")
+                        end
+                    end
                 end
             end
         end
@@ -79,22 +106,80 @@ class CalendarPerChatBot < PerChatBot
         end
 
         def listen_adding_event(message)
-            if message.kind_of? Telegram::Bot::Types::CallbackQuery then
+            if message.kind_of? Telegram::Bot::Types::CallbackQuery
                 case message.data
-                when 'test'
-                    reponse("ko")
-                when /^([A-Z]+\d)/
-                    @adding_event.merge({subject: $1})
-                    delete_kb(@adding_event[:kbId])
-                    # use reponse
-                    reponse("/add_event #$1 SUMMARY", Telegram::Bot::Types::ForceReply.new(force_reply: true))
+                when 'Cancel'
+                    if @adding_event.key?(:kbId)
+                        delete_message(@adding_event[:kbId])
+                    end
+                    @adding_event = Hash.new
+                when /^([A-Z]+\d)/                     # step two : 
+                    @adding_event[:subject] = $1.to_s  # got subject
+                    delete_message(@adding_event.delete(:kbId))
+
+                                                       # need summary
+                    reponse("Add event in #$1.")
+                    reponse("Summary:", Telegram::Bot::Types::ForceReply.new(force_reply: true))
+                    @adding_event[:wait_for_reply] = true
+                when /^change_month (\d+) (\d+)/
+                    edit_ikb(@adding_event[:kbId], create_calendar_ikb($1, $2))
+                when /(\d{1,2})\.(\d{1,2})\.(\d{4})/
+                    #reponse("Add event in #{@adding_event[:subject]} with summary:\n#{@adding_event[:summary]}\nFor the date #$1.#$2.#$3")
+                    # clear
+                    delete_message(@adding_event.delete(:kbId))
+                    @adding_event[:date] = $1.to_s + "." + $2.to_s + "." + $3.to_s
+                    reponse("Date set to #$1.#$2.#$3.")
+                    reponse("Starttime (hh:mm):", Telegram::Bot::Types::ForceReply.new(force_reply: true))
+                    @adding_event[:wait_for_reply] = true
+                end
+            elsif message.respond_to?('reply_to_message') && !message.reply_to_message.nil?
+                answer = message.reply_to_message
+                if message.text === "q"
+                    @adding_event = Hash.new
+                    reponse("Operation abort.")
+                else
+                    case answer.text
+                    when 'Summary:' # we get subject & summary
+                        # show kb for date
+                        @adding_event.delete(:wait_for_reply)
+                        kbId = generate_ikb("Which day ?", create_calendar_ikb(10, 2017))['result']['message_id']
+                        @adding_event[:kbId] = kbId.to_s
+                        @adding_event[:summary] = message.text
+                    when 'Starttime (hh:mm):'
+                        @adding_event.delete(:wait_for_reply)
+                        reponse("Add event in #{@adding_event[:subject]} with summary:\n#{@adding_event[:summary]}\nFor the date #{@adding_event[:date]} at #{message.text}.")
+                        #test.add(start: DateTime.new(2017,10,7,12,0,0), summary: @adding_event[:subject].to_s + " " + @adding_event[:summary], duration: 45)
+                    end
                 end
             else
                 case message.text
-                when 'hello'
-                    nil
+                when 'q'
+                    if @adding_event.key?(:kbId)
+                        delete_message(@adding_event[:kbId])
+                    end
+                    @adding_event = Hash.new
+                    reponse("Operation abort.")
+                else
+                    if @adding_event[:wait_for_reply]
+                        reponse("Please REPLY to the message above or abort current operation with 'q'.")
+                    end
                 end
             end
+        end
+
+        def create_calendar_ikb(month, year)
+            if month.to_i > 12
+                month = 1
+                year = year.to_i + 1
+            elsif month.to_i < 1
+                month = 12
+                year = year.to_i - 1
+            end
+            month_header = [[['<', "change_month " + (month.to_i-1).to_s + " " + year.to_s],[month.to_s + "." + year.to_s, ' '], ['>', "change_month " + (month.to_i+1).to_s + " " + year.to_s]]]
+            first_day = Date.new(year.to_i,month.to_i,1).cwday
+            nb_days = Date.new(year.to_i, month.to_i, -1).day
+            days_woffset = [' '] * (first_day-1) + [*1..nb_days] + [' '] * ( (36-first_day-nb_days) % 7 )
+            month_header + @@days_header + days_woffset.zip(days_woffset.collect{|d| d.to_s+"."+month.to_s+"."+year.to_s}).each_slice(7).to_a + [[["Cancel","Cancel"]]]
         end
     end
 end

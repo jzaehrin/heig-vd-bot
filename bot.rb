@@ -18,12 +18,18 @@ class Bot
         @config = JSON.parse(File.read(@config_file))
     end
 
+    def update_config
+        File.open(@config_file, "w") do |f|
+            f.write(@config.to_json)
+        end
+    end
+
     def reponse(chat_id, text, reply_markup = nil)
         @api.send_message(chat_id: chat_id, text: text, reply_markup: reply_markup)
     end
 
-    def delete_message(chat_id)
-        @api.delete_message(chat_id: chat_id, message_id: message.message_id)
+    def delete_message(chat_id, message_id)
+        @api.delete_message(chat_id: chat_id.to_s, message_id: message_id.to_s)
     end
 
     def edit_markup(chat_id, message_id, reply_markup)

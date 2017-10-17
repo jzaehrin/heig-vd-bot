@@ -8,24 +8,43 @@ module Adminable
         @config["admins"].key?(username)
     end
 
+    def invited_admin?(username)
+        @config["invited_admin"].key?(username)
+    end
+
     def match_admin(chat_id, username, password)
         if @config["invited_admin"].key?(username) && @config["invited_admin"][username] == password
             @config["invited_admin"].delete(username)
-            @config["admin"][username] = chat_id
+            @config["admins"][username] = chat_id
+            update_config()
+            true
         else
-         #return you aren't invited       
+            false # return you aren't invited       
         end
     end
 
     def add_admin(username, password)
         @config["invited_admin"][username] = password
+        update_config()
     end
 
     def remove_admin(username)
-        if id_admin?(username)
-            @config["admin"].delete(username)
+        if username_admin?(username)
+            @config["admins"].delete(username)
+            update_config()
+            true
         else
-            #return this username isn't admin
+            false #return this username isn't admin
+        end
+    end
+
+    def remove_invited_admin(username)
+        if invited_admin?(username)
+            @config["invited_admin"].delete(username)
+            update_config()
+            true
+        else
+            false #return this username isn't invited
         end
     end
 
