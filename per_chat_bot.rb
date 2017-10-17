@@ -22,6 +22,7 @@ class PerChatBot < Bot
 
     def listen(message)
         chat_id = message.respond_to?('chat') ? message.chat.id : message.from.id
+        print get_worker(chat_id)
         get_worker(chat_id).listen(message)   
     end
 

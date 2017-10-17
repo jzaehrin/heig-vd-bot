@@ -10,13 +10,27 @@ class CalendarPerChatBot < PerChatBot
     end
 
     def new_worker(chat_id)
-        @workers = {chat_id => CalendarWorker.new(chat_id,self)}
+        @workers[chat_id] = CalendarWorker.new(chat_id,self)
+    end
+
+    def create_calendar_ikb(month, year)
+        if month.to_i > 12
+            month = 1
+            year = year.to_i + 1
+        elsif month.to_i < 1
+            month = 12
+            year = year.to_i - 1
+        end
+        month_header = [[['<', "change_month " + (month.to_i-1).to_s + " " + year.to_s],[month.to_s + "." + year.to_s, ' '], ['>', "change_month " + (month.to_i+1).to_s + " " + year.to_s]]]
+        first_day = Date.new(year.to_i,month.to_i,1).cwday
+        nb_days = Date.new(year.to_i, month.to_i, -1).day
+        days_woffset = [' '] * (first_day-1) + [*1..nb_days] + [' '] * ( (36-first_day-nb_days) % 7 )
+        month_header + [['Mon','Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].zip([' ']*7)] + days_woffset.zip(days_woffset.collect{|d| d.to_s+"."+month.to_s+"."+year.to_s}).each_slice(7).to_a + [[["Cancel","Cancel"]]]
     end
     
     class CalendarWorker < PerChatBot::Worker
 
         @@subject = ['INF1', 'ARO1', 'WTF3']
-        @@days_header = [['Mon','Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].zip([' ']*7)]
 
         def initialize(chat_id, per_chat_bot)
             super(chat_id, per_chat_bot)
@@ -25,6 +39,10 @@ class CalendarPerChatBot < PerChatBot
 
         def admin?
             @per_chat_bot.admin?(@chat_id.to_s)
+        end
+
+        def create_calendar_ikb(month, year)
+            @per_chat_bot.create_calendar_ikb(month, year)
         end
 
         def listen(message)
@@ -51,6 +69,7 @@ class CalendarPerChatBot < PerChatBot
             if admin?
                 case message.text
                 when '/add_event' # step one : ask for a subject
+
                     kbId = generate_ikb("Which class subject ?", (@@subject+["Cancel"]).zip((@@subject+["Cancel"])).each_slice(4).to_a)['result']['message_id']
                     @adding_event = {kbId: kbId.to_s}
                 # --- SUPER ADMIN ---
@@ -148,6 +167,7 @@ class CalendarPerChatBot < PerChatBot
                     when 'Starttime (hh:mm):'
                         @adding_event.delete(:wait_for_reply)
                         reponse("Add event in #{@adding_event[:subject]} with summary:\n#{@adding_event[:summary]}\nFor the date #{@adding_event[:date]} at #{message.text}.")
+                        @adding_event = Hash.new
                         #test.add(start: DateTime.new(2017,10,7,12,0,0), summary: @adding_event[:subject].to_s + " " + @adding_event[:summary], duration: 45)
                     end
                 end
@@ -167,19 +187,6 @@ class CalendarPerChatBot < PerChatBot
             end
         end
 
-        def create_calendar_ikb(month, year)
-            if month.to_i > 12
-                month = 1
-                year = year.to_i + 1
-            elsif month.to_i < 1
-                month = 12
-                year = year.to_i - 1
-            end
-            month_header = [[['<', "change_month " + (month.to_i-1).to_s + " " + year.to_s],[month.to_s + "." + year.to_s, ' '], ['>', "change_month " + (month.to_i+1).to_s + " " + year.to_s]]]
-            first_day = Date.new(year.to_i,month.to_i,1).cwday
-            nb_days = Date.new(year.to_i, month.to_i, -1).day
-            days_woffset = [' '] * (first_day-1) + [*1..nb_days] + [' '] * ( (36-first_day-nb_days) % 7 )
-            month_header + @@days_header + days_woffset.zip(days_woffset.collect{|d| d.to_s+"."+month.to_s+"."+year.to_s}).each_slice(7).to_a + [[["Cancel","Cancel"]]]
-        end
+        
     end
 end

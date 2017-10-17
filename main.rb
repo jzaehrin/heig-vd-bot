@@ -5,6 +5,7 @@ require './calendar_per_chat_bot'
 require './calendar_bot'
 require './doge_bot'
 require './api'
+require 'logger'
 
 id = "infc"
 config_path = "./ressources/config/"
