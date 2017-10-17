@@ -23,8 +23,7 @@ class CalendarPerChatBot < PerChatBot
 
         def listen(message)
             if @adding_event.empty?
-                if message.kind_of? Telegram::Bot::Types::CallbackQuery then listen_callback(message)
-                elsif message.respond_to?('chat') then listen_text(message) end
+                super(message)
             else
                 listen_adding_event(message)
             end
