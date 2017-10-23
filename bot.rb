@@ -63,4 +63,8 @@ class Bot
         markup = Telegram::Bot::Types::InlineKeyboardMarkup.new(inline_keyboard: kb)
         edit_markup(chat_id, message_id, markup)
     end
+
+    def destroy
+        update_config
+    end
 end

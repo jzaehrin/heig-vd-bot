@@ -33,5 +33,10 @@ class Api
                 bot.listen(message)
             end
         end
+
+        #Destroy bots
+        bots.each do |bot|
+            bot.destroy
+        end
     end
 end
