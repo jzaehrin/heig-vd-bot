@@ -4,6 +4,10 @@ module Adminable
         @config["admins"].value?(chat_id)
     end
 
+    def super_admin?(chat_id)
+        @config["super_admin"] == (chat_id)
+    end
+
     def username_admin?(username)
         @config["admins"].key?(username)
     end
