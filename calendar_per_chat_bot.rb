@@ -79,7 +79,7 @@ class CalendarPerChatBot < PerChatBot
                     text = "Admins invitations list:\nusername\tchat_id\n" + @per_chat_bot.list_invited_admin().to_s
                     reponse(text)
                 end
-            when /\/isAdmin (.+)/ # test with chat id
+            when /\/is_admin (.+)/ # test with chat id
                 case $1
                 when /^(\d+)/
                     reponse(@per_chat_bot.admin?($1))
