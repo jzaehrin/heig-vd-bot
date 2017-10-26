@@ -10,7 +10,7 @@
 /test/version_tmp/
 /tmp/
 /ressources/calendars/
-/ressources/config/default.json
+/ressources/config/*
 
 # Used by dotenv library to load environment variables.
 # .env
