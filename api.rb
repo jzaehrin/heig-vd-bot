@@ -23,6 +23,7 @@ class Api
     end
 
     def listen(*bots)
+        begin
         @bot.listen do |message|
             if message.respond_to?('chat') then print message.chat.id else print message.from.id end
             print " say : "
@@ -33,10 +34,12 @@ class Api
                 bot.listen(message)
             end
         end
-
-        #Destroy bots
-        bots.each do |bot|
-            bot.destroy
+        
+        rescue SystemExit, Interrupt
+            #Destroy bots
+            bots.each do |bot|
+                bot.destroy
+            end
         end
     end
 end
