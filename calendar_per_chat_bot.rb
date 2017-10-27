@@ -4,9 +4,14 @@ require './admin'
 
 class CalendarPerChatBot < PerChatBot
     include Adminable
+    
+    attr_accessor :calendars, :subject
 
     def initialize(config_path, api)
         super(config_path, "calendar", api)
+        @subject = ['INF1', 'ARO1', 'MAD', 'MBT']
+        @@all = Calendar.new('all', Array.new())
+        @calendars = @subject.map{|sub| [ sub , Calendar.new( sub, [@@all] ) ] }.to_h
     end
 
     def new_worker(chat_id)
@@ -29,9 +34,6 @@ class CalendarPerChatBot < PerChatBot
     end
 
     class CalendarWorker < PerChatBot::Worker
-
-        @@subject = ['INF1', 'ARO1', 'WTF3']
-
         def initialize(chat_id, per_chat_bot)
             super(chat_id, per_chat_bot)
             @adding_event = Hash.new
@@ -118,7 +120,7 @@ class CalendarPerChatBot < PerChatBot
             case message.text
             when '/add_event' # step one : ask for a subject
 
-                kbId = generate_ikb("Which class subject ?", (@@subject+["Cancel"]).zip((@@subject+["Cancel"])).each_slice(4).to_a)['result']['message_id']
+                kbId = generate_ikb("Which class subject ?", (@per_chat_bot.subject+["Cancel"]).zip((@per_chat_bot.subject+["Cancel"])).each_slice(4).to_a)['result']['message_id']
                 @adding_event = {kbId: kbId.to_s}
             else
                 listen_user(message)
@@ -155,7 +157,8 @@ class CalendarPerChatBot < PerChatBot
                         delete_message(@adding_event[:kbId])
                     end
                     @adding_event = Hash.new
-                when /^([A-Z]+\d)/                     # step two : 
+#---------- STEP 2: catch subject, ask for summary
+                when /^([A-Z]+\d?)/                     # step two : 
                     @adding_event[:subject] = $1.to_s  # got subject
                     delete_message(@adding_event.delete(:kbId))
 
@@ -165,11 +168,12 @@ class CalendarPerChatBot < PerChatBot
                     @adding_event[:wait_for_reply] = true
                 when /^change_month (\d+) (\d+)/
                     edit_ikb(@adding_event[:kbId], create_calendar_ikb($1, $2))
+#---------- STEP 4: catch date, ask for starttime
                 when /(\d{1,2})\.(\d{1,2})\.(\d{4})/
                     #reponse("Add event in #{@adding_event[:subject]} with summary:\n#{@adding_event[:summary]}\nFor the date #$1.#$2.#$3")
                     # clear
                     delete_message(@adding_event.delete(:kbId))
-                    @adding_event[:date] = $1.to_s + "." + $2.to_s + "." + $3.to_s
+                    @adding_event[:date] = DateTime.new($3.to_i, $2.to_i, $1.to_i)
                     reponse("Date set to #$1.#$2.#$3.")
                     reponse("Starttime (hh:mm):", Telegram::Bot::Types::ForceReply.new(force_reply: true))
                     @adding_event[:wait_for_reply] = true
@@ -181,17 +185,29 @@ class CalendarPerChatBot < PerChatBot
                     reponse("Operation abort.")
                 else
                     case answer.text
+#---------- STEP 3: catch summary, ask for date
                     when 'Summary:' # we get subject & summary
                         # show kb for date
                         @adding_event.delete(:wait_for_reply)
                         kbId = generate_ikb("Which day ?", create_calendar_ikb(10, 2017))['result']['message_id']
                         @adding_event[:kbId] = kbId.to_s
                         @adding_event[:summary] = message.text
+#---------- STEP 5: catch starttime, ask for duration
                     when 'Starttime (hh:mm):'
-                        @adding_event.delete(:wait_for_reply)
-                        reponse("Add event in #{@adding_event[:subject]} with summary:\n#{@adding_event[:summary]}\nFor the date #{@adding_event[:date]} at #{message.text}.")
+                        starttime = message.text.split(":")
+                        @adding_event[:date] += Rational(starttime.first.to_f + starttime.last.to_f / 60, 24)
+                        reponse("Time set to #{message.text}.")
+                        reponse("Duration in minutes (default 45):", Telegram::Bot::Types::ForceReply.new(force_reply: true))
+#---------- STEP 6: catch duration, add event in cal
+                    when 'Duration in minutes (default 45):'
+                        if message.text == ""
+                            duration = 45 
+                        else
+                            duration = message.text.to_i
+                        end
+                        @per_chat_bot.calendars[@adding_event[:subject]].add(start: @adding_event[:date], summary: @adding_event[:subject].to_s + ": " + @adding_event[:summary], duration: duration )
+                        reponse("Add event in #{@adding_event[:subject]} with summary:\n#{@adding_event[:summary]}\nFor the date #{@adding_event[:date]}, with duration #{duration}")
                         @adding_event = Hash.new
-                        #test.add(start: DateTime.new(2017,10,7,12,0,0), summary: @adding_event[:subject].to_s + " " + @adding_event[:summary], duration: 45)
                     end
                 end
             else
