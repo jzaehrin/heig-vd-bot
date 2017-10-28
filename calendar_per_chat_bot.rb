@@ -7,8 +7,8 @@ class CalendarPerChatBot < PerChatBot
     
     attr_accessor :calendars, :subject, :all
 
-    def initialize(config_path, api)
-        super(config_path, "calendar", api)
+    def initialize(config_path, father_bot)
+        super(config_path, "calendar", father_bot)
         @subject = ['INF1', 'ARO1', 'MAD', 'MBT']
         @all = Calendar.new('all', Array.new())
         @calendars = @subject.map{|sub| [ sub , Calendar.new( sub, [@all] ) ] }.to_h

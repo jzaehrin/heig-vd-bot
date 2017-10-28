@@ -3,11 +3,11 @@ require 'abstraction'
 
 class Bot
     abstract
-    attr_reader :token, :bot, :config_file, :config
+    attr_reader :config_file, :config
 
-    def initialize(config_path, config_name, api)
-        @id = api.id
-        @api = api.bot.api
+    def initialize(config_path, config_name, father_bot)
+        @id = father_bot.id
+        @api = father_bot.bot.api
         @config_file = config_path + config_name + "." + @id + ".json" 
         @Markup_empty = Telegram::Bot::Types::InlineKeyboardMarkup.new(inline_keyboard: [])
 

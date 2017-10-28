@@ -1,19 +1,14 @@
 require 'json'
 require 'abstraction'
 
-class Api
-    attr_reader :token, :bot, :config_file, :config, :id
+class FatherBot  < Bot
+    include Adminable
+    attr_reader :token, :bot, :id
 
     def initialize(config_path, id)       
         @id = id
-        @config_file = config_path + "default." + @id + ".json"
-        load_config()
-        @token = @config["token"]
-        @bot
-    end
-
-    def load_config
-        @config = JSON.parse(File.read(@config_file))
+        run
+        super(config_path, "default", self) 
     end
 
     def run
