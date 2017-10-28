@@ -17,7 +17,7 @@ module Adminable
     end
 
     def has_super_admin
-        @config["super_admin"].empty?
+        not @config["super_admin"].empty?
     end
 
     def set_super_admin(char_id)
