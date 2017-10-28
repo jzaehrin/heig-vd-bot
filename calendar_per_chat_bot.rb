@@ -144,7 +144,7 @@ class CalendarPerChatBot < PerChatBot
             when /\/ls(.*)/
                 case $1
                 when ''
-                    reponse(@per_chat_bot.all.list)
+                    reponseHTML("<a href=\"http://rasp-heig.ddns.net/calendars/all.ics\">all.ics</a> :\n" + @per_chat_bot.all.list)
                 when /^ ([A-Z]+\d?)/
                     if @per_chat_bot.calendars.key?($1)
                         reponseHTML("<a href=\"http://rasp-heig.ddns.net/calendars/#$1.ics\">#$1.ics</a> :\n" + @per_chat_bot.calendars[$1].list)
