@@ -7,7 +7,7 @@ class Bot
 
     def initialize(config_path, config_name, father_bot)
         @id = father_bot.id
-        @api = father_bot.bot.api
+        @api = father_bot.api
         @config_file = config_path + config_name + "." + @id + ".json" 
         @Markup_empty = Telegram::Bot::Types::InlineKeyboardMarkup.new(inline_keyboard: [])
 

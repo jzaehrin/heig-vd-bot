@@ -147,7 +147,7 @@ class CalendarPerChatBot < PerChatBot
                         reponse("Sorry, but you were not invited to become an admin of this bot.")
                     end
                 end
-            when /\/ls (.*)/
+            when /\/ls(.*)/
                 case $1
                 when ''
                     reponseHTML("<a href=\"http://rasp-heig.ddns.net/calendars/all.ics\">all.ics</a> :\n" + @per_chat_bot.all.list)
