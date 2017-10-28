@@ -5,13 +5,13 @@ require './admin'
 class CalendarPerChatBot < PerChatBot
     include Adminable
     
-    attr_accessor :calendars, :subject
+    attr_accessor :calendars, :subject, :all
 
     def initialize(config_path, api)
         super(config_path, "calendar", api)
         @subject = ['INF1', 'ARO1', 'MAD', 'MBT']
-        @@all = Calendar.new('all', Array.new())
-        @calendars = @subject.map{|sub| [ sub , Calendar.new( sub, [@@all] ) ] }.to_h
+        @all = Calendar.new('all', Array.new())
+        @calendars = @subject.map{|sub| [ sub , Calendar.new( sub, [@all] ) ] }.to_h
     end
 
     def new_worker(chat_id)
@@ -144,7 +144,7 @@ class CalendarPerChatBot < PerChatBot
             when /\/ls(.*)/
                 case $1
                 when ''
-                    reponse(@@all.list)
+                    reponse(@per_chat_bot.all.list)
                 when /^ ([A-Z]+\d?)/
                     if @per_chat_bot.calendars.key?($1)
                         reponseHTML("<a href=\"http://rasp-heig.ddns.net/calendars/#$1.ics\">#$1.ics</a> :\n" + @per_chat_bot.calendars[$1].list)
