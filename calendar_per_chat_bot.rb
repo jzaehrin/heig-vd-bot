@@ -47,6 +47,10 @@ class CalendarPerChatBot < PerChatBot
             @per_chat_bot.super_admin?(@chat_id.to_s)
         end
 
+        def has_super_admin?
+            @per_chat_bot.has_super_admin?(@chat_id.to_s)
+        end
+
         def create_calendar_ikb(month, year)
             @per_chat_bot.create_calendar_ikb(month, year)
         end
@@ -90,29 +94,24 @@ class CalendarPerChatBot < PerChatBot
                 when /^([a-zA-Z0-9]{4,})/ # test with username
                     reponse(@per_chat_bot.username_admin?($1))
                 end
-            when /\/add_admin ([a-zA-Z0-9]{4,})/
-                if admin?  
-                    o = [('a'..'z'), ('A'..'Z'), ('0'..'9')].map(&:to_a).flatten
-                    password = (0...8).map { o[rand(o.length)] }.join
-                    @per_chat_bot.add_admin($1,password)
-                    reponse("#$1 invited with key #{password.to_s}.")
-                end
+            when /\/add_admin ([a-zA-Z0-9]{4,})/    
+                password = (0...8).map { o[rand(o.length)] }.join
+                @per_chat_bot.add_admin($1,password)
+                reponse("#$1 invited with key #{password.to_s}.")
             when /\/remove_invitation ([a-zA-Z0-9]{4,})/
-                if admin?
-                    if @per_chat_bot.remove_invited_admin($1) 
-                        reponse("#$1 invitation removed.")
-                    else
-                        reponse("#$1 wasn't on the list!")
-                    end
+                if @per_chat_bot.remove_invited_admin($1) 
+                    reponse("#$1 invitation removed.")
+                else
+                    reponse("#$1 wasn't on the list!")
                 end
             when /\/remove_admin ([a-zA-Z0-9]{4,})/
-                if admin?
-                    if @per_chat_bot.remove_admin($1) 
-                        reponse("#$1 is not an admin anymore.")
-                    else
-                        reponse("#$1 wasn't on the admins list!")
-                    end
+                if @per_chat_bot.remove_admin($1) 
+                    reponse("#$1 is not an admin anymore.")
+                else
+                    reponse("#$1 wasn't on the admins list!")
                 end
+            when /\/revoke/
+                @per_chat_bot.remove_super_admin()
             else
                 listen_admin(message)
             end
@@ -131,6 +130,13 @@ class CalendarPerChatBot < PerChatBot
 
         def listen_user(message)
             case message.text
+            when /\/init/
+                unless has_super_admin?
+                    @per_chat_bot.set_super_admin(@chat_id)
+                    reponse("Congrats! You're now the super admin of this bot.")
+                else
+                    reponse("The bot are already init.")
+                end
             when /\/admin ([a-zA-Z0-9]{8})/
                 if admin?
                     reponse("You already are an admin for this bot ;) !")
@@ -141,7 +147,7 @@ class CalendarPerChatBot < PerChatBot
                         reponse("Sorry, but you were not invited to become an admin of this bot.")
                     end
                 end
-            when /\/ls(.*)/
+            when /\/ls (.*)/
                 case $1
                 when ''
                     reponseHTML("<a href=\"http://rasp-heig.ddns.net/calendars/all.ics\">all.ics</a> :\n" + @per_chat_bot.all.list)

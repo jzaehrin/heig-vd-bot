@@ -16,6 +16,14 @@ module Adminable
         @config["invited_admin"].key?(username)
     end
 
+    def has_super_admin
+        if @config["super_admin"].empty?
+    end
+
+    def set_super_admin(char_id)
+        @config["super_admin"] = chat_id
+    end
+
     def match_admin(chat_id, username, password)
         if @config["invited_admin"].key?(username) && @config["invited_admin"][username] == password
             @config["invited_admin"].delete(username)
