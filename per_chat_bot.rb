@@ -22,7 +22,6 @@ class PerChatBot < Bot
 
     def listen(message)
         chat_id = message.respond_to?('chat') ? message.chat.id : message.from.id
-        print get_worker(chat_id)
         get_worker(chat_id).listen(message)   
     end
 
@@ -49,6 +48,10 @@ class PerChatBot < Bot
 
         def reponse(text, reply_markup=nil)
             @per_chat_bot.reponse(@chat_id.to_i, text, reply_markup)
+        end
+
+        def reponseHTML(text, reply_markup=nil)
+            @per_chat_bot.reponseHTML(@chat_id.to_i, text, reply_markup)
         end
 
         def delete_message(message_id)

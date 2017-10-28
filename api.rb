@@ -25,11 +25,6 @@ class Api
     def listen(*bots)
         begin
         @bot.listen do |message|
-            if message.respond_to?('chat') then print message.chat.id else print message.from.id end
-            print " say : "
-            print message.text if message.respond_to?('text')
-            print message.data if message.respond_to?('data')
-            print "\n"
             bots.each do |bot|
                 bot.listen(message)
             end

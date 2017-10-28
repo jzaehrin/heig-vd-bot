@@ -80,6 +80,8 @@ class CalendarPerChatBot < PerChatBot
                 when 'invitations'
                     text = "Admins invitations list:\nusername\tchat_id\n" + @per_chat_bot.list_invited_admin().to_s
                     reponse(text)
+                else
+                    listen_user(message)
                 end
             when /\/is_admin (.+)/ # test with chat id
                 case $1
@@ -137,6 +139,17 @@ class CalendarPerChatBot < PerChatBot
                         reponse("Congrats! You're now a admin of this bot.")
                     else
                         reponse("Sorry, but you were not invited to become an admin of this bot.")
+                    end
+                end
+            when /\/ls(.*)/
+                case $1
+                when ''
+                    reponse(@@all.list)
+                when /^ ([A-Z]+\d?)/
+                    if @per_chat_bot.calendars.key?($1)
+                        reponseHTML("<a href=\"http://rasp-heig.ddns.net/calendars/#$1.ics\">#$1.ics</a> :\n" + @per_chat_bot.calendars[$1].list)
+                    else
+                        reponse($1 + " doesn't correspond to any calendar in the system.")
                     end
                 end
             end

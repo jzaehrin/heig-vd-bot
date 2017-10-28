@@ -66,6 +66,10 @@ class Calendar
     end
 
     def list()
+        events = @cal.events.collect{ |e|
+            e.dtstart.strftime("<b>%d.%m.%Y at %R</b>") +  " " +  e.summary.to_s
+        }
+        events.sort.join("\n")
     end
 
     def get(name)

@@ -28,6 +28,10 @@ class Bot
         @api.send_message(chat_id: chat_id, text: text, reply_markup: reply_markup)
     end
 
+    def reponseHTML(chat_id, text, reply_markup = nil)
+        @api.send_message(chat_id: chat_id, text: text, reply_markup: reply_markup, parse_mode: "HTML")
+    end
+
     def delete_message(chat_id, message_id)
         @api.delete_message(chat_id: chat_id.to_s, message_id: message_id.to_s)
     end
