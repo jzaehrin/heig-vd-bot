@@ -18,6 +18,49 @@ class CalendarPerChatBot < PerChatBot
         @workers[chat_id] = CalendarWorker.new(chat_id,self)
     end
 
+    def name
+        "Calendar bot"
+    end
+
+    def short_usage
+        "My prefix is 'c' and you can show my help with '/c help'"
+    end
+
+    def super_admin_usage
+        <<-HEREDOC
+            // TODO
+        HEREDOC
+    end
+
+    def admin_usage
+        <<-HEREDOC
+            // TODO
+        HEREDOC
+    end
+
+    def user_usage
+        <<-HEREDOC
+            // TODO
+        HEREDOC
+    end
+
+    def usage(chat_id)
+        if super_admin? chat_id
+            usage += super_admin_usage
+
+        if admin? chat_id
+            usage += admin_usage
+
+        if super_admin? chat_id
+            usage += user_usage
+
+        <<-HEREDOC
+            Help for #{name} :
+                #{usage}
+        HEREDOC
+
+    end
+
     def create_calendar_ikb(month, year)
         if month.to_i > 12
             month = 1
