@@ -29,6 +29,7 @@ class Bot
     end
 
     def reponseHTML(chat_id, text, reply_markup = nil)
+        print chat_id
         @api.send_message(chat_id: chat_id, text: text, reply_markup: reply_markup, parse_mode: "HTML")
     end
 

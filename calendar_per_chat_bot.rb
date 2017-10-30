@@ -193,6 +193,12 @@ class CalendarPerChatBot < PerChatBot
                         reponse("Sorry, but you were not invited to become an admin of this bot.")
                     end
                 end
+            when '/chan'
+                print "/chan"
+                callback = @per_chat_bot.reponseHTML("-1001116076301", "test")
+                reponse(callback['result']['chat']['id'])
+            when '/thisid'
+                reponse("id : " + message.chat.id.to_s)
             when /\/ls( (.*))?/
                 case $1
                 when /^(.*)/
