@@ -47,12 +47,15 @@ class CalendarPerChatBot < PerChatBot
     def usage(chat_id)
         if super_admin? chat_id
             usage += super_admin_usage
+        end
 
         if admin? chat_id
             usage += admin_usage
+        end
 
         if super_admin? chat_id
             usage += user_usage
+        end
 
         <<-HEREDOC
             Help for #{name} :
