@@ -147,16 +147,16 @@ class CalendarPerChatBot < PerChatBot
                         reponse("Sorry, but you were not invited to become an admin of this bot.")
                     end
                 end
-            when /\/ls(.*)/
+            when /\/ls( (.*))?/
                 case $1
-                when ''
-                    reponseHTML("<a href=\"http://rasp-heig.ddns.net/calendars/all.ics\">all.ics</a> :\n" + @per_chat_bot.all.list)
-                when /^ ([A-Z]+\d?)/
+                when /^(.*)/
                     if @per_chat_bot.calendars.key?($1)
                         reponseHTML("<a href=\"http://rasp-heig.ddns.net/calendars/#$1.ics\">#$1.ics</a> :\n" + @per_chat_bot.calendars[$1].list)
                     else
                         reponse($1 + " doesn't correspond to any calendar in the system.")
                     end
+                else
+                    reponseHTML("<a href=\"http://rasp-heig.ddns.net/calendars/all.ics\">all.ics</a> :\n" + @per_chat_bot.all.list)
                 end
             end
         end
