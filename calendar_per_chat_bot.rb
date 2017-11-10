@@ -226,9 +226,9 @@ Help for <b>#{name}</b> :
                 #reponse(callback['result']['chat']['id'])
             when /id/
                 reponse("id : " + message.chat.id.to_s)
-            when /ls( (.*))?/
+            when /ls(.*)?/
                 case $1
-                when /^(.*)/
+                when /^ (.*)/
                     if @per_chat_bot.calendars.key?($1)
                         reponseHTML("<a href=\"http://rasp-heig.ddns.net/calendars/#$1.ics\">#$1.ics</a> :\n" + @per_chat_bot.calendars[$1].list)
                     else
