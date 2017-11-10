@@ -5,13 +5,14 @@ require './admin'
 class CalendarPerChatBot < PerChatBot
     include Adminable
     
-    attr_accessor :calendars, :subject, :all
+    attr_accessor :calendars, :subject, :all, :channel
 
     def initialize(config_path, father_bot)
-        super(config_path, "calendar", father_bot)
+        super(config_path, "calendar", father_bot, "c")
         @subject = ['INF1', 'ARO1', 'MAD', 'MBT']
         @all = Calendar.new('all', Array.new())
         @calendars = @subject.map{|sub| [ sub , Calendar.new( sub, [@all] ) ] }.to_h
+        @channel = @config["channel"]
     end
 
     def new_worker(chat_id)
@@ -23,43 +24,65 @@ class CalendarPerChatBot < PerChatBot
     end
 
     def short_usage
-        "My prefix is 'c' and you can show my help with '/c help'"
+        "My prefix is '#{@flag}' and you can show my help with '/#{@c}c help'"
     end
 
     def super_admin_usage
         <<-HEREDOC
-            // TODO
+<b>Super admin usage:</b>
+<code> add_admin USER</code>
+- return a key to promote "USER" (without @) as admin
+<code> is_admin USER</code>
+- tell if "USER" (without @) is admin or not 
+<code> ls PARAM</code>
+- "PARAM" can take "admins" to lists all admins
+- or "invitations" to lists all invitations
+- see <code>ls</code> form <i>user usage</i>
+<code> remove_admin USER</code>
+- remove "USER" (without @) from admin list
+<code> remove_invitation USER</code>
+- remove the invitation for "USER" (without @) 
+<code> revoke</code>
+- revoke the current super admin
+- see <code>init</code> from <i>user usage</i>
         HEREDOC
     end
 
     def admin_usage
         <<-HEREDOC
-            // TODO
+<b>Admin usage:</b>
+<code> add_event</code>
+- start the adding event procedure
         HEREDOC
     end
 
     def user_usage
         <<-HEREDOC
-            // TODO
+<b>User usage:</b>
+<code> admin KEY</code> 
+- promote yourself as admin of this bot
+<code> chan</code>
+- show the broadcast channel id
+<code> help</code>
+- show this help message
+<code> id</code>
+- show this chat unique ID
+<code> init</code>
+- you will become super admin if there is none
+<code> ls CAL</code>
+- lists the content of the calendar "CAL"
+- lists the main calendar if "CAL" isn't specified
         HEREDOC
     end
 
     def usage(chat_id)
-        if super_admin? chat_id
-            usage += super_admin_usage
-        end
-
-        if admin? chat_id
-            usage += admin_usage
-        end
-
-        if super_admin? chat_id
-            usage += user_usage
-        end
+        usage = user_usage
+        usage += admin_usage if admin? chat_id.to_s
+        usage += super_admin_usage if super_admin? chat_id.to_s
 
         <<-HEREDOC
-            Help for #{name} :
-                #{usage}
+Help for <b>#{name}</b> :
+#{usage}
         HEREDOC
 
     end
@@ -72,11 +95,11 @@ class CalendarPerChatBot < PerChatBot
             month = 12
             year = year.to_i - 1
         end
-        month_header = [[['<', "change_month " + (month.to_i-1).to_s + " " + year.to_s],[month.to_s + "." + year.to_s, ' '], ['>', "change_month " + (month.to_i+1).to_s + " " + year.to_s]]]
+        month_header = [[['<', "/#{@flag} change_month " + (month.to_i-1).to_s + " " + year.to_s],[month.to_s + "." + year.to_s, ' '], ['>', "/#{@flag}  change_month " + (month.to_i+1).to_s + " " + year.to_s]]]
         first_day = Date.new(year.to_i,month.to_i,1).cwday
         nb_days = Date.new(year.to_i, month.to_i, -1).day
         days_woffset = [' '] * (first_day-1) + [*1..nb_days] + [' '] * ( (36-first_day-nb_days) % 7 )
-        month_header + [['Mon','Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].zip([' ']*7)] + days_woffset.zip(days_woffset.collect{|d| d.to_s+"."+month.to_s+"."+year.to_s}).each_slice(7).to_a + [[["Cancel","Cancel"]]]
+        month_header + [['Mon','Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].zip([' ']*7)] + days_woffset.zip(days_woffset.collect{|d| d.to_s+"."+month.to_s+"."+year.to_s}).each_slice(7).to_a + [[["Cancel","/#{@flag} Cancel"]]]
     end
 
     class CalendarWorker < PerChatBot::Worker
@@ -121,7 +144,7 @@ class CalendarPerChatBot < PerChatBot
 
         def listen_super_admin(message)
             case message.text
-            when /\/ls (.+)/
+            when /ls (.+)/
                 case $1
                 when 'admins'
                     text = "Admins list:\nusername\tchat_id\n"
@@ -133,30 +156,30 @@ class CalendarPerChatBot < PerChatBot
                 else
                     listen_user(message)
                 end
-            when /\/is_admin (.+)/ # test with chat id
+            when /is_admin (.+)/ # test with chat id
                 case $1
                 when /^(\d+)/
                     reponse(@per_chat_bot.admin?($1))
                 when /^([a-zA-Z0-9]{4,})/ # test with username
                     reponse(@per_chat_bot.username_admin?($1))
                 end
-            when /\/add_admin ([a-zA-Z0-9]{4,})/    
+            when /add_admin ([a-zA-Z0-9]{4,})/    
                 password = (0...8).map { o[rand(o.length)] }.join
                 @per_chat_bot.add_admin($1,password)
                 reponse("#$1 invited with key #{password.to_s}.")
-            when /\/remove_invitation ([a-zA-Z0-9]{4,})/
+            when /remove_invitation ([a-zA-Z0-9]{4,})/
                 if @per_chat_bot.remove_invited_admin($1) 
                     reponse("#$1 invitation removed.")
                 else
                     reponse("#$1 wasn't on the list!")
                 end
-            when /\/remove_admin ([a-zA-Z0-9]{4,})/
+            when /remove_admin ([a-zA-Z0-9]{4,})/
                 if @per_chat_bot.remove_admin($1) 
                     reponse("#$1 is not an admin anymore.")
                 else
                     reponse("#$1 wasn't on the admins list!")
                 end
-            when /\/revoke/
+            when 'revoke'
                 @per_chat_bot.remove_super_admin()
             else
                 listen_admin(message)
@@ -165,8 +188,8 @@ class CalendarPerChatBot < PerChatBot
 
         def listen_admin(message)
             case message.text
-            when '/add_event' # step one : ask for a subject
-
+#---------- STEP 1: ask for a subject
+            when /add_event/
                 kbId = generate_ikb("Which class subject ?", (@per_chat_bot.subject+["Cancel"]).zip((@per_chat_bot.subject+["Cancel"])).each_slice(4).to_a)['result']['message_id']
                 @adding_event = {kbId: kbId.to_s}
             else
@@ -176,14 +199,18 @@ class CalendarPerChatBot < PerChatBot
 
         def listen_user(message)
             case message.text
-            when /\/init/
+            when '/' + @per_chat_bot.flag
+                reponse(@per_chat_bot.short_usage)
+            when /help/
+                reponseHTML(@per_chat_bot.usage(@chat_id))
+            when /init/
                 unless has_super_admin?
                     @per_chat_bot.set_super_admin(@chat_id)
                     reponse("Congrats! You're now the super admin of this bot.")
                 else
-                    reponse("The bot are already init.")
+                    reponse("This bot has already been initialize.")
                 end
-            when /\/admin ([a-zA-Z0-9]{8})/
+            when /admin ([a-zA-Z0-9]{8})/
                 if admin?
                     reponse("You already are an admin for this bot ;) !")
                 else
@@ -193,13 +220,13 @@ class CalendarPerChatBot < PerChatBot
                         reponse("Sorry, but you were not invited to become an admin of this bot.")
                     end
                 end
-            when '/chan'
-                print "/chan"
-                callback = @per_chat_bot.reponseHTML("-1001116076301", "test")
-                reponse(callback['result']['chat']['id'])
-            when '/thisid'
+            when /chan/
+                reponse(@per_chat_bot.channel)
+                #callback = @per_chat_bot.reponseHTML("", "test")
+                #reponse(callback['result']['chat']['id'])
+            when /id/
                 reponse("id : " + message.chat.id.to_s)
-            when /\/ls( (.*))?/
+            when /ls( (.*))?/
                 case $1
                 when /^(.*)/
                     if @per_chat_bot.calendars.key?($1)
@@ -223,21 +250,21 @@ class CalendarPerChatBot < PerChatBot
         def listen_adding_event(message)
             if message.kind_of? Telegram::Bot::Types::CallbackQuery
                 case message.data
-                when 'Cancel'
+                when /Cancel/
                     if @adding_event.key?(:kbId)
                         delete_message(@adding_event[:kbId])
                     end
                     @adding_event = Hash.new
 #---------- STEP 2: catch subject, ask for summary
-                when /^([A-Z]+\d?)/                     # step two : 
+                when /([A-Z]+\d?)/                     # step two : 
                     @adding_event[:subject] = $1.to_s  # got subject
                     delete_message(@adding_event.delete(:kbId))
 
                     # need summary
                     reponse("Add event in #$1.")
-                    reponse("Summary:", Telegram::Bot::Types::ForceReply.new(force_reply: true))
+                    reponse("/#{@per_chat_bot.flag} Summary:", Telegram::Bot::Types::ForceReply.new(force_reply: true))
                     @adding_event[:wait_for_reply] = true
-                when /^change_month (\d+) (\d+)/
+                when /change_month (\d+) (\d+)/
                     edit_ikb(@adding_event[:kbId], create_calendar_ikb($1, $2))
 #---------- STEP 4: catch date, ask for starttime
                 when /(\d{1,2})\.(\d{1,2})\.(\d{4})/
@@ -246,7 +273,7 @@ class CalendarPerChatBot < PerChatBot
                     delete_message(@adding_event.delete(:kbId))
                     @adding_event[:date] = DateTime.new($3.to_i, $2.to_i, $1.to_i)
                     reponse("Date set to #$1.#$2.#$3.")
-                    reponse("Starttime (hh:mm):", Telegram::Bot::Types::ForceReply.new(force_reply: true))
+                    reponse("/#{@per_chat_bot.flag} Starttime (hh:mm):", Telegram::Bot::Types::ForceReply.new(force_reply: true))
                     @adding_event[:wait_for_reply] = true
                 end
             elsif message.respond_to?('reply_to_message') && !message.reply_to_message.nil?
@@ -257,20 +284,20 @@ class CalendarPerChatBot < PerChatBot
                 else
                     case answer.text
 #---------- STEP 3: catch summary, ask for date
-                    when 'Summary:' # we get subject & summary
+                    when /Summary/ # we get subject & summary
                         # show kb for date
                         @adding_event.delete(:wait_for_reply)
                         kbId = generate_ikb("Which day ?", create_calendar_ikb(10, 2017))['result']['message_id']
                         @adding_event[:kbId] = kbId.to_s
                         @adding_event[:summary] = message.text
 #---------- STEP 5: catch starttime, ask for duration
-                    when 'Starttime (hh:mm):'
+                    when /Starttime/
                         starttime = message.text.split(":")
                         @adding_event[:date] += Rational(starttime.first.to_f + starttime.last.to_f / 60, 24)
                         reponse("Time set to #{message.text}.")
-                        reponse("Duration in minutes (default 45):", Telegram::Bot::Types::ForceReply.new(force_reply: true))
+                        reponse("/#{@per_chat_bot.flag} Duration in minutes (default 45):", Telegram::Bot::Types::ForceReply.new(force_reply: true))
 #---------- STEP 6: catch duration, add event in cal
-                    when 'Duration in minutes (default 45):'
+                    when /Duration/
                         if message.text == ""
                             duration = 45 
                         else
@@ -296,7 +323,5 @@ class CalendarPerChatBot < PerChatBot
                 end
             end
         end
-
-
     end
 end

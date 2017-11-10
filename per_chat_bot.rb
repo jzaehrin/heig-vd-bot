@@ -4,8 +4,8 @@ require './bot'
 class PerChatBot < Bot
     abstract
 
-    def initialize(config_path, config_name, father_bot)
-    	super(config_path, config_name, father_bot)
+    def initialize(config_path, config_name, father_bot, flag)
+    	super(config_path, config_name, father_bot, flag)
         @workers = Hash.new
     end
 
@@ -72,7 +72,7 @@ class PerChatBot < Bot
 
         def generate_ikb(text, buttons_infos)
             kb = buttons_infos.collect { |row|  
-                row.collect { |button| Telegram::Bot::Types::InlineKeyboardButton.new(text: button.first, callback_data: button.last)
+                row.collect { |button| Telegram::Bot::Types::InlineKeyboardButton.new(text: button.first, callback_data: "/#{@per_chat_bot.flag} " + button.last)
                 }
             }
             markup = Telegram::Bot::Types::InlineKeyboardMarkup.new(inline_keyboard: kb)
@@ -81,7 +81,7 @@ class PerChatBot < Bot
 
         def edit_ikb(message_id, buttons_infos)
             kb = buttons_infos.collect { |row|  
-                row.collect { |button| Telegram::Bot::Types::InlineKeyboardButton.new(text: button.first, callback_data: button.last)
+                row.collect { |button| Telegram::Bot::Types::InlineKeyboardButton.new(text: button.first, callback_data: "/#{@per_chat_bot.flag} " + button.last)
                 }
             }
             markup = Telegram::Bot::Types::InlineKeyboardMarkup.new(inline_keyboard: kb)

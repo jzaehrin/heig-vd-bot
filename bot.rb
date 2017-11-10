@@ -3,11 +3,12 @@ require 'abstraction'
 
 class Bot
     abstract
-    attr_reader :config_file, :config
+    attr_reader :config_file, :config, :flag
 
-    def initialize(config_path, config_name, father_bot)
+    def initialize(config_path, config_name, father_bot, flag)
         @id = father_bot.id
         @api = father_bot.api
+        @flag = flag
         @config_file = config_path + config_name + "." + @id + ".json" 
         @Markup_empty = Telegram::Bot::Types::InlineKeyboardMarkup.new(inline_keyboard: [])
 
@@ -29,7 +30,6 @@ class Bot
     end
 
     def reponseHTML(chat_id, text, reply_markup = nil)
-        print chat_id
         @api.send_message(chat_id: chat_id, text: text, reply_markup: reply_markup, parse_mode: "HTML")
     end
 
