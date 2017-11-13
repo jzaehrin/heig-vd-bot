@@ -118,6 +118,7 @@ class CalendarPerChatBot < PerChatBot
         def initialize(chat_id, per_chat_bot)
             super(chat_id, per_chat_bot)
             @adding_event = Hash.new
+            @subscribe_event = Hash.new
         end
 
         def admin?
