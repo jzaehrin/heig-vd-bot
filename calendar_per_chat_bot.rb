@@ -252,11 +252,7 @@ class CalendarPerChatBot < PerChatBot
                 else
                     reponseHTML("<a href=\"http://rasp-heig.ddns.net/calendars/all.ics\">all.ics</a> :\n" + @per_chat_bot.all.list)
                 end
-            when /subscribe/
-                kb_content = (@per_chat_bot.subject+["Done"]).zip((@per_chat_bot.subject+["Done"])).each_slice(4).to_a
-                kbId = generate_ikb("Which subject do you want to subscribe to ?", kb_content)['result']['message_id']
-                @subscribe_event = {kbId: kbId.to_s, kb_content: kb_content}
-            end
+                        end
         end
 
         def listen_callback(message)
