@@ -28,7 +28,7 @@ class CalendarPerChatBot < PerChatBot
     end
 
     def short_usage
-        "#{usage_prefixe} and you can show my help with '/#{@c}c help'"
+        "#{usage_prefix} and you can show my help with '/#{@flag} help'"
     end
 
     def super_admin_usage
@@ -86,6 +86,7 @@ class CalendarPerChatBot < PerChatBot
 
         <<~HEREDOC
             Help for <b>#{name}</b> :
+            #{prefix_usage}
             #{usage}
         HEREDOC
 
@@ -103,6 +104,7 @@ class CalendarPerChatBot < PerChatBot
             month = 12
             year = year.to_i - 1
         end
+
         month_header = [[['<', "/#{@flag} change_month " + (month.to_i-1).to_s + " " + year.to_s],[month.to_s + "." + year.to_s, ' '], ['>', "/#{@flag}  change_month " + (month.to_i+1).to_s + " " + year.to_s]]]
         first_day = Date.new(year.to_i,month.to_i,1).cwday
         nb_days = Date.new(year.to_i, month.to_i, -1).day
@@ -254,7 +256,7 @@ class CalendarPerChatBot < PerChatBot
                 @subscribe_event = {kbId: kbId.to_s, kb_content: kb_content}
             end
         end
-
+  
         def listen_callback(message)
             case message.data
             when 'test'
