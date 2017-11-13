@@ -23,55 +23,61 @@ class CalendarPerChatBot < PerChatBot
         "Calendar bot"
     end
 
+    def usage_prefix
+        "My prefix is '#{@flag}'"
+    end
+
     def short_usage
-        "My prefix is '#{@flag}' and you can show my help with '/#{@c}c help'"
+        "#{usage_prefix} and you can show my help with '/#{@flag} help'"
     end
 
     def super_admin_usage
-        <<-HEREDOC
-<b>Super admin usage:</b>
-<code> add_admin USER</code>
-- return a key to promote "USER" (without @) as admin
-<code> is_admin USER</code>
-- tell if "USER" (without @) is admin or not 
-<code> ls PARAM</code>
-- "PARAM" can take "admins" to lists all admins
-- or "invitations" to lists all invitations
-- see <code>ls</code> form <i>user usage</i>
-<code> remove_admin USER</code>
-- remove "USER" (without @) from admin list
-<code> remove_invitation USER</code>
-- remove the invitation for "USER" (without @) 
-<code> revoke</code>
-- revoke the current super admin
-- see <code>init</code> from <i>user usage</i>
+        <<~HEREDOC
+            <b>Super admin usage:</b>
+            <code> add_admin USER</code>
+            - return a key to promote "USER" (without @) as admin
+            <code> is_admin USER</code>
+            - tell if "USER" (without @) is admin or not 
+            <code> ls PARAM</code>
+            - "PARAM" can take "admins" to lists all admins
+            - or "invitations" to lists all invitations
+            - see <code>ls</code> form <i>user usage</i>
+            <code> remove_admin USER</code>
+            - remove "USER" (without @) from admin list
+            <code> remove_invitation USER</code>
+            - remove the invitation for "USER" (without @) 
+            <code> revoke</code>
+            - revoke the current super admin
+            - see <code>init</code> from <i>user usage</i>
         HEREDOC
     end
 
     def admin_usage
-        <<-HEREDOC
-<b>Admin usage:</b>
-<code> add_event</code>
-- start the adding event procedure
+        <<~HEREDOC
+            <b>Admin usage:</b>
+            <code> add_event</code>
+            - start the adding event procedure
         HEREDOC
     end
 
     def user_usage
-        <<-HEREDOC
-<b>User usage:</b>
-<code> admin KEY</code> 
-- promote yourself as admin of this bot
-<code> chan</code>
-- show the broadcast channel id
-<code> help</code>
-- show this help message
-<code> id</code>
-- show this chat unique ID
-<code> init</code>
-- you will become super admin if there is none
-<code> ls CAL</code>
-- lists the content of the calendar "CAL"
-- lists the main calendar if "CAL" isn't specified
+        <<~HEREDOC
+            <b>User usage:</b>
+            <code> admin KEY</code> 
+            - promote yourself as admin of this bot
+            <code> chan</code>
+            - show the broadcast channel id
+            <code> help</code>
+            - show this help message
+            <code> id</code>
+            - show this chat unique ID
+            <code> init</code>
+            - you will become super admin if there is none
+            <code> ls CAL</code>
+            - lists the content of the calendar "CAL"
+            - lists the main calendar if "CAL" isn't specified
+            <code> help</code>
+            -  print this message
         HEREDOC
     end
 
@@ -80,9 +86,10 @@ class CalendarPerChatBot < PerChatBot
         usage += admin_usage if admin? chat_id.to_s
         usage += super_admin_usage if super_admin? chat_id.to_s
 
-        <<-HEREDOC
-Help for <b>#{name}</b> :
-#{usage}
+        <<~HEREDOC
+            Help for <b>#{name}</b> :
+            #{prefix_usage}
+            #{usage}
         HEREDOC
 
     end
@@ -95,6 +102,7 @@ Help for <b>#{name}</b> :
             month = 12
             year = year.to_i - 1
         end
+
         month_header = [[['<', "/#{@flag} change_month " + (month.to_i-1).to_s + " " + year.to_s],[month.to_s + "." + year.to_s, ' '], ['>', "/#{@flag}  change_month " + (month.to_i+1).to_s + " " + year.to_s]]]
         first_day = Date.new(year.to_i,month.to_i,1).cwday
         nb_days = Date.new(year.to_i, month.to_i, -1).day
@@ -125,10 +133,12 @@ Help for <b>#{name}</b> :
         end
 
         def listen(message)
-            if @adding_event.empty?
-                super(message)
-            else
+            unless @adding_event.empty?
                 listen_adding_event(message)
+            else unless @subscribe_event.empty?
+                listen_subscribe_event(message)
+            else
+                super(message)
             end
         end
 
@@ -237,6 +247,10 @@ Help for <b>#{name}</b> :
                 else
                     reponseHTML("<a href=\"http://rasp-heig.ddns.net/calendars/all.ics\">all.ics</a> :\n" + @per_chat_bot.all.list)
                 end
+            when /subscribe/
+                kb_content = (@per_chat_bot.subject+["Done"]).zip((@per_chat_bot.subject+["Done"])).each_slice(4).to_a
+                kbId = generate_ikb("Which subject do you want to subscribe to ?", kb_content)['result']['message_id']
+                @subscribe_event = {kbId: kbId.to_s, kb_content: kb_content}
             end
         end
 
@@ -318,6 +332,39 @@ Help for <b>#{name}</b> :
                     reponse("Operation abort.")
                 else
                     if @adding_event[:wait_for_reply]
+                        reponse("Please REPLY to the message above or abort current operation with 'q'.")
+                    end
+                end
+            end
+        end
+
+        def listen_subscribe_event(message)
+            if message.kind_of? Telegram::Bot::Types::CallbackQuery
+                case message.data
+                when /Done/
+                    if @subscribe_event.key?(:kbId)
+                        delete_message(@subscribe_event[:kbId])
+                    end
+
+                    @subscribe_event = Hash.new
+                when /([A-Z]+\d?)/ # step two : 
+                    @config["subscribe"][@chat_id][] = $1.to_s
+
+                    @subscribe_event[@subscribe_event[:kb_content].index($1.to_s)].insert(-1, "\u{2611}")
+                    edit_ikb(@subscribe_event[:kdId], @subscribe_event[:kb_content])
+                    # need summary
+                    reponse("Add subscribe to #$1.")
+                end
+            else
+                case message.text
+                when 'q'
+                    if @subscribe_event.key?(:kbId)
+                        delete_message(@subscribe_event[:kbId])
+                    end
+                    @subscribe_event = Hash.new
+                    reponse("Operation abort.")
+                else
+                    if @subscribe_event[:wait_for_reply]
                         reponse("Please REPLY to the message above or abort current operation with 'q'.")
                     end
                 end
