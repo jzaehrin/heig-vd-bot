@@ -137,9 +137,9 @@ class CalendarPerChatBot < PerChatBot
         end
 
         def listen(message)
-            unless @adding_event.empty?
+            if !@adding_event.empty?
                 listen_adding_event(message)
-            else unless @subscribe_event.empty?
+            elsif !@subscribe_event.empty?
                 listen_subscribe_event(message)
             else
                 super(message)
