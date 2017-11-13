@@ -94,6 +94,10 @@ class CalendarPerChatBot < PerChatBot
 
     end
 
+    def add_subscribe(chat_id, calendar)
+        @config[subscribe][chat_id][] = calendar
+    end
+
     def create_calendar_ikb(month, year)
         if month.to_i > 12
             month = 1
@@ -347,8 +351,8 @@ class CalendarPerChatBot < PerChatBot
                     end
 
                     @subscribe_event = Hash.new
-                when /([A-Z]+\d?)/ # step two : 
-                    @config["subscribe"][@chat_id][] = $1.to_s
+                when /([A-Z]+\d?)/ # step two :
+                    @per_chat_bot.add_subscribe(@chat_id, $1.to_s)
 
                     @subscribe_event[@subscribe_event[:kb_content].index($1.to_s)].insert(-1, "\u{2611}")
                     edit_ikb(@subscribe_event[:kdId], @subscribe_event[:kb_content])
