@@ -86,7 +86,7 @@ class CalendarPerChatBot < PerChatBot
 
         <<~HEREDOC
             Help for <b>#{name}</b> :
-            #{prefix_usage}
+            #{usage_prefix}
             #{usage}
         HEREDOC
 
