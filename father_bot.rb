@@ -56,6 +56,8 @@ class FatherBot  < Bot
             @logger.warn('System interrupt') { "A SINGTERM has been catched. Destroying bots and father bot..." }
             close(bots)           
         rescue StandardError => e
+            puts e.backtrace
+            puts e
             @logger.error('Response Error') { "Api say : #{e.message}" }
             close(bots)
         end

@@ -128,7 +128,7 @@ class CalendarPerChatBot < PerChatBot
         end
 
         def has_super_admin?
-            @per_chat_bot.has_super_admin?(@chat_id.to_s)
+            @per_chat_bot.has_super_admin?
         end
 
         def create_calendar_ikb(month, year)
