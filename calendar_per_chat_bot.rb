@@ -177,7 +177,7 @@ class CalendarPerChatBot < PerChatBot
                     reponse(@per_chat_bot.username_admin?($1))
                 end
             when /add_admin ([a-zA-Z0-9]{4,})/    
-                password = (0...8).map { o[rand(o.length)] }.join
+                password = (0...8).map { |o| o[rand(o.length)] }.join
                 @per_chat_bot.add_admin($1,password)
                 reponse("#$1 invited with key #{password.to_s}.")
             when /remove_invitation ([a-zA-Z0-9]{4,})/
