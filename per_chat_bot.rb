@@ -88,5 +88,9 @@ class PerChatBot < Bot
             edit_markup(message_id, markup)
         end
 
+        def edit_message(message_id, text)
+            @per_chat_bot.edit_message(@chat_id, message_id, text)
+        end
+
     end
 end

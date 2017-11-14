@@ -38,6 +38,10 @@ class Bot
         @api.delete_message(chat_id: chat_id.to_s, message_id: message_id.to_s)
     end
 
+    def edit_message(chat_id, message_id, text)
+        @api.edit_message_text(chat_id: chat_id.to_s, message_id: message_id.to_s, text: text.to_s)
+    end
+
     def edit_markup(chat_id, message_id, reply_markup)
         @api.edit_message_reply_markup(chat_id: chat_id, message_id: message_id, reply_markup: reply_markup)
     end
