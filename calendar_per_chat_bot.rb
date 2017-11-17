@@ -342,7 +342,10 @@ class CalendarPerChatBot < PerChatBot
                             duration = message.text.to_i
                         end
                         @per_chat_bot.calendars[@adding_event[:subject]].add(start: @adding_event[:date], summary: @adding_event[:subject].to_s + ": " + @adding_event[:summary], duration: duration )
-                        reponse("Add event in #{@adding_event[:subject]} with summary:\n#{@adding_event[:summary]}\nFor the date #{@adding_event[:date]}, with duration #{duration}")
+                        text = "Event add in #{@adding_event[:subject]};  Summary:\n#{@adding_event[:summary]}\n For the date #{@adding_event[:date]}, with duration #{duration}";
+                        reponse(text);
+
+                        send_broadcast(@calendar_per_chat.config["subscribe"][@adding_event[:subject].to_s].reject { |chat_id| chat_id != @chat_id }, text)
                         @adding_event = Hash.new
                     end
                 end
