@@ -4,15 +4,26 @@ require './admin'
 
 class CalendarPerChatBot < PerChatBot
     include Adminable
+   
+    CONF_MIN = {"super_admin":"","admins":{},"invited_admin":{},"subjects":[],"channel":"0","subscribe":{}}
     
-    attr_accessor :calendars, :subject, :all, :channel
+    attr_accessor :calendars, :config, :all, :channel
 
     def initialize(config_path, father_bot)
         super(config_path, "calendar", father_bot, "c")
-        @subject = ['INF1', 'ARO1', 'MAD', 'MBT']
+        check_conf
         @all = Calendar.new('all', Array.new())
-        @calendars = @subject.map{|sub| [ sub , Calendar.new( sub, [@all] ) ] }.to_h
+        @calendars = @config["subjects"].map{|sub| [ sub , Calendar.new( sub, [@all] ) ] }.to_h
         @channel = @config["channel"]
+    end
+
+    def check_conf
+        CONF_MIN.each do |k, v|
+            unless @config.key? k.to_s then @config[k.to_s] = v end 
+        end
+        @config["subjects"].each do |sub|
+            unless @config["subscribe"].key? sub.to_s then @config["subscribe"][sub.to_s] = [] end
+        end
     end
 
     def new_worker(chat_id)
@@ -92,8 +103,14 @@ class CalendarPerChatBot < PerChatBot
 
     end
 
-    def add_subscribe(chat_id, calendar)
-        @config["subscribe"][chat_id.to_s] = calendar
+    def toggle_subscribe(chat_id, calendar)
+        if @config["subscribe"][calendar.to_s].include? chat_id.to_s
+            @config["subscribe"][calendar.to_s].delete chat_id.to_s
+            false
+        else
+            @config["subscribe"][calendar.to_s] << chat_id.to_s
+            true
+        end
     end
 
     def create_calendar_ikb(month, year)
@@ -128,7 +145,7 @@ class CalendarPerChatBot < PerChatBot
         end
 
         def has_super_admin?
-            @per_chat_bot.has_super_admin?(@chat_id.to_s)
+            @per_chat_bot.has_super_admin?
         end
 
         def create_calendar_ikb(month, year)
@@ -176,7 +193,8 @@ class CalendarPerChatBot < PerChatBot
                 when /^([a-zA-Z0-9]{4,})/ # test with username
                     reponse(@per_chat_bot.username_admin?($1))
                 end
-            when /add_admin ([a-zA-Z0-9]{4,})/    
+            when /add_admin ([a-zA-Z0-9]{4,})/ 
+                o = [('a'..'z'), ('A'..'Z'), (0..9)].map(&:to_a).flatten
                 password = (0...8).map { o[rand(o.length)] }.join
                 @per_chat_bot.add_admin($1,password)
                 reponse("#$1 invited with key #{password.to_s}.")
@@ -203,7 +221,7 @@ class CalendarPerChatBot < PerChatBot
             case message.text
 #---------- STEP 1: ask for a subject
             when /add_event/
-                kbId = generate_ikb("Which class subject ?", (@per_chat_bot.subject+["Cancel"]).zip((@per_chat_bot.subject+["Cancel"])).each_slice(4).to_a)['result']['message_id']
+                kbId = generate_ikb("Which class subject ?", (@per_chat_bot.config["subjects"]+["Cancel"]).zip((@per_chat_bot.config["subjects"]+["Cancel"])).each_slice(4).to_a)['result']['message_id']
                 @adding_event = {kbId: kbId.to_s}
             else
                 listen_user(message)
@@ -251,7 +269,10 @@ class CalendarPerChatBot < PerChatBot
                     reponseHTML("<a href=\"http://rasp-heig.ddns.net/calendars/all.ics\">all.ics</a> :\n" + @per_chat_bot.all.list)
                 end
             when /subscribe/
-                kb_content = (@per_chat_bot.subject+["Done"]).zip((@per_chat_bot.subject+["Done"])).each_slice(4).to_a
+                kb_subject = @per_chat_bot.config["subjects"].collect { |sub| 
+                    (@per_chat_bot.config["subscribe"][sub.to_s].include? @chat_id.to_s) ? sub += " \u{2713}" : sub
+                }
+                kb_content = (kb_subject).zip((@per_chat_bot.config["subjects"])).each_slice(4).to_a + [[["Done", "Done"]]]
                 kbId = generate_ikb("Which subject do you want to subscribe to ?", kb_content)['result']['message_id']
                 @subscribe_event = {kbId: kbId.to_s, kb_content: kb_content}
             end
@@ -345,17 +366,32 @@ class CalendarPerChatBot < PerChatBot
             if message.kind_of? Telegram::Bot::Types::CallbackQuery
                 case message.data
                 when /Done/
-                    if @subscribe_event.key?(:kbId)
-                        delete_message(@subscribe_event[:kbId])
-                    end
+                    delete_message(@subscribe_event[:kbId]) if @subscribe_event.key?(:kbId)
+                    delete_message(@subscribe_event[:pop_id]) if @subscribe_event.key?(:pop_id)
 
                     @subscribe_event = Hash.new
                 when /([A-Z]+\d?)/ # step two : 
-                    @per_chat_bot.add_subscribe(@chat_id, $1.to_s)
-                    @subscribe_event[:kb_content][0][@per_chat_bot.subject.index($1.to_s)][0] += " \u{2713}"
-                    edit_ikb(@subscribe_event[:kbId].to_s, @subscribe_event[:kb_content])
-                    # need summary
-                    reponse("Add subscribe to #$1.")
+                    if @per_chat_bot.toggle_subscribe(@chat_id, $1) # if adding
+                        index = @per_chat_bot.config["subjects"].index($1.to_s)
+                        @subscribe_event[:kb_content][index / 4][index % 4][0] += " \u{2713}"
+                        edit_ikb(@subscribe_event[:kbId].to_s, @subscribe_event[:kb_content])
+                        text = "Add subscribe to #$1"
+                        if @subscribe_event.key? :pop_id
+                            edit_message(@subscribe_event[:pop_id], text)
+                        else
+                            @subscribe_event[:pop_id] = reponse(text)['result']['message_id'] 
+                        end
+                    else # if removing
+                        index = @per_chat_bot.config["subjects"].index($1.to_s)
+                        @subscribe_event[:kb_content][index/4][index % 4][0] = $1
+                        edit_ikb(@subscribe_event[:kbId].to_s, @subscribe_event[:kb_content])
+                        text = "Remove subscribe to #$1."
+                        if @subscribe_event.key? :pop_id
+                            edit_message(@subscribe_event[:pop_id], text)
+                        else
+                            @subscribe_event[:pop_id] = reponse(text)['result']['message_id'] 
+                        end
+                    end
                 end
             else
                 case message.text

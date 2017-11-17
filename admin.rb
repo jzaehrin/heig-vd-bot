@@ -16,11 +16,11 @@ module Adminable
         @config["invited_admin"].key?(username)
     end
 
-    def has_super_admin
+    def has_super_admin?
         not @config["super_admin"].empty?
     end
 
-    def set_super_admin(char_id)
+    def set_super_admin(chat_id)
         @config["super_admin"] = chat_id
     end
 
