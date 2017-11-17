@@ -16,4 +16,6 @@ father_bot = FatherBot.new(config_path, id, logger)
 
 calendar_per_chat_bot = CalendarPerChatBot.new(config_path, father_bot)
 
+father_bot.add_bot(calendar_per_chat_bot)
+
 father_bot.listen(calendar_per_chat_bot)

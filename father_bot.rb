@@ -8,10 +8,25 @@ class FatherBot  < Bot
     def initialize(config_path, id, logger)       
         @id = id
         @logger = logger
+        @bots = Array.new
         @api
         super(config_path, "default", self, "f")
         @token = @config["token"]
         run
+    end
+
+    def add_bot(*bots)
+        @bots.concat bots
+    end
+
+    def usage
+        usage_bots = Array.new.concat(@bots.each |bot| bot.usage)
+
+        <<~HEREDOC
+            I'm the father of all Bot :
+            - /help print this help
+            #{usage_bots.join('\n')}
+        HEREDOC
     end
 
     def run
@@ -21,7 +36,7 @@ class FatherBot  < Bot
         end
     end
 
-    def listen(*bots)
+    def listen()
         begin
             @logger.info('listen') { "Start listening for messages..." }
             @bot.listen do |message|
@@ -29,7 +44,7 @@ class FatherBot  < Bot
                 text = message.respond_to?(:text) ? message.text : message.data
                 # catch string "q" to abort any ongoing operation
                 if text == 'q'
-                    bots.each do |bot|
+                    @bots.each do |bot|
                         bot.listen(message)
                     end
                 # normal listen process
@@ -39,7 +54,7 @@ class FatherBot  < Bot
                     case text 
                     when /^\/f (.*)/
                         @logger.debug('listen') { "Dispatched to \"father bot\"." }
-                        listen_father(message) 
+                        listen_father(message)
                     when /^\/(\w+)/
                         bots.each do |bot|
                             # dispatch where the flag correspond
@@ -48,6 +63,8 @@ class FatherBot  < Bot
                                 bot.listen(message)
                             end
                         end
+                    else
+                        listen_father(message)
                     end
                 end
             end
@@ -62,7 +79,10 @@ class FatherBot  < Bot
     end
 
     def listen_father(message)
-        
+        case message
+        when /\/help/
+            usage
+        end
     end
 
     def close(bots)

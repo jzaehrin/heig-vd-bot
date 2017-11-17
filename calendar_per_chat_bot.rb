@@ -28,7 +28,7 @@ class CalendarPerChatBot < PerChatBot
     end
 
     def short_usage
-        "#{usage_prefix} and you can show my help with '/#{@flag} help'"
+        "- #{usage_prefix} and you can show my help with '/#{@flag} help'"
     end
 
     def super_admin_usage
