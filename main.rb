@@ -8,7 +8,7 @@ require './father_bot'
 require 'logger'
 
 id = "infc"
-logger = Logger.new('./ressources/log/main.log', 'daily')
+logger = Logger.new('./ressources/log/main.txt', 'daily')
 config_path = "./ressources/config/"
 father_bot = FatherBot.new(config_path, id, logger)
 
