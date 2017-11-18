@@ -51,16 +51,21 @@ class FatherBot  < Bot
                 else 
                     # if message is a reply, catch flag in original text message
                     text = message.reply_to_message.text if message.respond_to?(:reply_to_message) && !message.reply_to_message.nil?
+                    foundFlag = false
                     case text 
-                    when /^\/(\w) /
+                    when /^\/(\w+)/
                         @bots.each do |bot|
                             # dispatch where the flag correspond
                             if bot.flag == $1
                                 @logger.debug('listen') { "Dispatched to bot \"#{bot.name}.\"" }
                                 bot.listen(message)
+                                foundFlag = true
+                                break
                             end
                         end
-                    else
+                    end
+
+                    until foundFlag 
                         @logger.debug('listen') { "Dispatched to \"father bot\"." }
                         listen_father(message)
                     end
