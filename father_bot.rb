@@ -20,7 +20,7 @@ class FatherBot  < Bot
     end
 
     def usage(chat_id)
-        usage_bots = Array.new.concat(@bots.map{|bot| bot.usage(chat_id)})
+        usage_bots = Array.new.concat(@bots.map{|bot| bot.short_usage})
 
         <<~HEREDOC
             I'm the father of all Bot :
