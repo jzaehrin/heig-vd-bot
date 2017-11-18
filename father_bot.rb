@@ -19,8 +19,8 @@ class FatherBot  < Bot
         @bots.concat bots
     end
 
-    def usage
-        usage_bots = Array.new.concat(@bots.each |bot| bot.usage)
+    def usage(chat_id)
+        usage_bots = Array.new.concat(@bots.map{|bot| bot.usage(chat_id)})
 
         <<~HEREDOC
             I'm the father of all Bot :
@@ -82,11 +82,9 @@ class FatherBot  < Bot
     end
 
     def listen_father(text, chat_id)
-        puts "listen father"
         case text
         when /\/help/
-            puts "help"
-            reponseHTML(chat_id, usage)
+            reponseHTML(chat_id, usage(chat_id))
         end
     end
 
