@@ -56,7 +56,7 @@ class FatherBot  < Bot
                         @logger.debug('listen') { "Dispatched to \"father bot\"." }
                         listen_father(message)
                     when /^\/(\w+)/
-                        bots.each do |bot|
+                        @bots.each do |bot|
                             # dispatch where the flag correspond
                             if bot.flag == $1
                                 @logger.debug('listen') { "Dispatched to bot \"#{bot.name}.\"" }
