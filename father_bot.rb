@@ -71,10 +71,10 @@ class FatherBot  < Bot
         rescue SystemExit, Interrupt
             #Destroy bots
             @logger.warn('System interrupt') { "A SINGTERM has been catched. Destroying bots and father bot..." }
-            close(bots)           
+            close           
         rescue StandardError => e
             @logger.error('Response Error') { "Api say : #{e.message}" }
-            close(bots)
+            close
         end
     end
 
@@ -85,9 +85,9 @@ class FatherBot  < Bot
         end
     end
 
-    def close(bots)
+    def close
         @logger.close
-        bots.each do |bot|
+        @bots.each do |bot|
             bot.destroy
         end
         destroy
