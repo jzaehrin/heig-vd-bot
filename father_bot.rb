@@ -84,7 +84,7 @@ class FatherBot  < Bot
     def listen_father(message)
         case message
         when /\/help/
-            usage
+            reponseHTML(message.chat.id, usage)
         end
     end
 
