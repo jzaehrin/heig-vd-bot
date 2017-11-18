@@ -67,7 +67,7 @@ class FatherBot  < Bot
 
                     unless foundFlag 
                         @logger.debug('listen') { "Dispatched to \"father bot\"." }
-                        listen_father(message)
+                        listen_father(text, message.chat.id)
                     end
                 end
             end
@@ -81,10 +81,12 @@ class FatherBot  < Bot
         end
     end
 
-    def listen_father(message)
-        case message
+    def listen_father(text, chat_id)
+        puts "listen father"
+        case text
         when /\/help/
-            reponseHTML(message.chat.id, usage)
+            puts "help"
+            reponseHTML(chat_id, usage)
         end
     end
 
