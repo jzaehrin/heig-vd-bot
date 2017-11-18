@@ -65,7 +65,7 @@ class FatherBot  < Bot
                         end
                     end
 
-                    until foundFlag 
+                    unless foundFlag 
                         @logger.debug('listen') { "Dispatched to \"father bot\"." }
                         listen_father(message)
                     end
