@@ -55,7 +55,7 @@ class Bot
     end
 
     def send_broadcast(list, text)
-        list.map do |id|
+        list.each do |id|
             @api.send_message(chat_id: id, text: text)
         end
     end
