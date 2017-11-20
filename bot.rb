@@ -54,9 +54,9 @@ class Bot
         @api.send_photo(chat_id: chat_id, photo: photo)
     end
 
-    def send_broadcast(list, text)
+    def send_broadcast(list, text, reply_markup = nil)
         list.each do |chat_id|
-            Bot.reponse(chat_id.to_s, text)
+            @api.send_message(chat_id: chat_id.to_s, text: text.to_s, reply_markup: reply_markup)
         end
     end
 
