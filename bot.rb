@@ -56,7 +56,7 @@ class Bot
 
     def send_broadcast(list, text)
         list.each do |chat_id|
-            reponse(chat_id.to_s, text)
+            self.reponse(chat_id.to_s, text)
         end
     end
 
