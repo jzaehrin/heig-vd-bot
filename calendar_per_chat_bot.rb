@@ -78,15 +78,16 @@ class CalendarPerChatBot < PerChatBot
             - promote yourself as admin of this bot
             <code> chan</code>
             - show the broadcast channel id
-            <code> help</code>
-            - show this help message
-            <code> id</code>
-            - show this chat unique ID
             <code> init</code>
             - you will become super admin if there is none
             <code> ls CAL</code>
             - lists the content of the calendar "CAL"
             - lists the main calendar if "CAL" isn't specified
+            <code subscribe</code>
+            - Manage our calendar's subscribe
+                -> Subscribe to a calendar show you all updates on it
+            <code> help</code>
+            - show this help message
         HEREDOC
     end
 
@@ -251,12 +252,6 @@ class CalendarPerChatBot < PerChatBot
                         reponse("Sorry, but you were not invited to become an admin of this bot.")
                     end
                 end
-            when /chan/
-                reponse(@per_chat_bot.channel)
-                #callback = @per_chat_bot.reponseHTML("", "test")
-                #reponse(callback['result']['chat']['id'])
-            when /id/
-                reponse("id : " + message.chat.id.to_s)
             when /ls(.*)?/
                 case $1
                 when /^ (.*)/
