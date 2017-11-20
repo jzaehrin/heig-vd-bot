@@ -345,7 +345,7 @@ class CalendarPerChatBot < PerChatBot
                         text = "Event add in #{@adding_event[:subject]};  Summary:\n#{@adding_event[:summary]}\n For the date #{@adding_event[:date]}, with duration #{duration}";
                         reponse(text);
 
-                        send_broadcast(@per_chat_bot.config["subscribe"][@adding_event[:subject].to_s], text)
+                        @per_chat_bot.send_broadcast(@per_chat_bot.config["subscribe"][@adding_event[:subject].to_s], text)
                         @adding_event = Hash.new
                     end
                 end
