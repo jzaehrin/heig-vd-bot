@@ -55,8 +55,8 @@ class Bot
     end
 
     def send_broadcast(list, text)
-        list.each do |id|
-            @api.send_message(chat_id: id, text: text)
+        list.each do |chat_id|
+            reponse(chat_id.to_s, text)
         end
     end
 
