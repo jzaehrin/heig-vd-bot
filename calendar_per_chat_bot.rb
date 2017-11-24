@@ -3,9 +3,9 @@ require './calendar'
 require './admin'
 
 class CalendarPerChatBot < PerChatBot
-    include Adminable
+    prepend Adminable
    
-    CONF_MIN = {"super_admin":"","admins":{},"invited_admin":{},"subjects":[],"channel":"0","subscribe":{}}
+    CONF_MIN = {"super_admin":"","admins":{},"invited_admin":{},"subjects":[],"subscribe":{}}
     
     attr_accessor :calendars, :config, :all, :channel, :listen_user, :listen_admin, :listen_super_admin
 
@@ -15,9 +15,9 @@ class CalendarPerChatBot < PerChatBot
         @all = Calendar.new('all', Array.new())
         @calendars = @config["subjects"].map{|sub| [ sub , Calendar.new( sub, [@all] ) ] }.to_h
         @channel = @config["channel"]
-        @user_cmds = @user_cmds.merge({"ls" => :list, "subscribe" => :subscribe}).merge(@@listen_user)
-        @listen_admin = @@listen_admin.merge({"add_event" => :add_event})
-        @listen_super_admin = @@listen_super_admin
+        @user_cmds.merge!({"ls" => :list, "subscribe" => :subscribe}.merge(@@user_cmds))
+        @admin_cmds = @@admin_cmds.merge({"add_event" => :add_event})
+        @super_admin_cmds = @@super_admin_cmds
     end
 
     def check_conf
@@ -28,18 +28,16 @@ class CalendarPerChatBot < PerChatBot
             unless @config["subscribe"].key? sub.to_s then @config["subscribe"][sub.to_s] = [] end
         end
     end
-    
-    def user_usage
-        result = get_user_cmds.map{ |k, v| 
-            "<code>#{k}</code>
-#{eval "@@" + v.to_s + "_usage"}" if k!= "def_cmd"
-        }.drop(1).join("\n")
+
+ 
+    def new_worker(chat_id)
+        @workers[chat_id] = CalendarWorker.new(chat_id, self)
     end
 
-    def new_worker(chat_id)
-        @workers[chat_id] = CalendarWorker.new(chat_id,self)
+    def get_method_help(methode_name)
+        eval "@@" + methode_name.to_s + "_usage"
     end
-    
+
     def toggle_subscribe(chat_id, calendar)
         if @config["subscribe"][calendar.to_s].include? chat_id.to_s
             @config["subscribe"][calendar.to_s].delete chat_id.to_s
@@ -66,12 +64,6 @@ class CalendarPerChatBot < PerChatBot
         month_header + [['Mon','Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].zip([' ']*7)] + days_woffset.zip(days_woffset.collect{|d| d.to_s+"."+month.to_s+"."+year.to_s}).each_slice(7).to_a + [[["Cancel","/#{@flag} Cancel"]]]
     end
 
-    @@add_event_usage = "- start an adding event procedure"
-    def add_event(message, args)
-        kbId = generate_ikb("Which class subject ?", (get_config["subjects"]+["Cancel"]).zip((get_config["subjects"]+["Cancel"])).each_slice(4).to_a)['result']['message_id']
-        @adding_event = {kbId: kbId.to_s}
-    end
-
     @@list_usage = "- lists the content of the calendar \"CAL\"\n- lists the main calendar if \"CAL\" isn't specified"
     def list(message, args)
         text = get_text(message).sub("ls","")
@@ -85,16 +77,9 @@ class CalendarPerChatBot < PerChatBot
             end
         end
     end
-
+    
+    @@add_event_usage = "- start an adding event procedure"
     @@subscribe_usage = "- Manage our calendar's subscribe\n    -> Subscribe to a calendar show you all updates on it"
-    def subscribe(message, args)
-        kb_subject = get_config["subjects"].collect { |sub| 
-            (get_config["subscribe"][sub.to_s].include? messsage.chat.id.to_s) ? sub += " \u{2713}" : sub
-        }
-        kb_content = (kb_subject).zip((get_config["subjects"])).each_slice(4).to_a + [[["Done", "Done"]]]
-        kbId = generate_ikb("Which subject do you want to subscribe to ?", kb_content)['result']['message_id']
-        @subscribe_event = {kbId: kbId.to_s, kb_content: kb_content}
-    end
 
     class CalendarWorker < PerChatBot::Worker
 
@@ -119,18 +104,15 @@ class CalendarPerChatBot < PerChatBot
         def create_calendar_ikb(month, year)
             @per_chat_bot.create_calendar_ikb(month, year)
         end
-        
-        def usage(chat_id)
-            usage = user_usage
-            usage += admin_usage if admin?
-            usage += super_admin_usage if super_admin?
 
-            <<~HEREDOC
-                Help for <b>#{name}</b> :
-                #{usage_prefix}
-                #{usage}
-            HEREDOC
+        def get_admin_cmds
+            @per_chat_bot.get_admin_cmds
         end
+
+        def get_super_admin_cmds
+            @per_chat_bot.get_super_admin_cmds
+        end
+        
 
         def listen(message)
             if !@adding_event.empty?
@@ -138,42 +120,23 @@ class CalendarPerChatBot < PerChatBot
             elsif !@subscribe_event.empty?
                 listen_subscribe_event(message)
             else
+                args = @per_chat_bot.get_text(message).split(" ").drop(1) # Array : ["cmd", "arg1", ...]
+                cmd = args.shift # cmd = "cdm" and args = ["arg1", ...]
+                cmd = "def_cmd" if cmd == nil
+
                 if super_admin?
-                    listen_super_admin(message)
-                elsif admin?
-                    listen_admin(message)
-                else
-                    listen_user(message)
+                    exec_cmd(get_super_admin_cmds[cmd], message, args) if get_super_admin_cmds.key? cmd
                 end
+
+                if admin?
+                    exec_cmd(get_admin_cmds[cmd], message, args) if get_admin_cmds.key? cmd
+                end
+
+                exec_cmd(get_user_cmds[cmd], message, args) if get_user_cmds.key? cmd
+
             end
         end
 
-        def listen_super_admin(message)
-            args = @per_chat_bot.get_text(message).split(" ").drop(1) # Array : ["cmd", "arg1", ...]
-            cmd = args.shift # cmd = "cdm" and args = ["arg1", ...]
-            cmd = "def_cmd" if cmd == nil
-            @per_chat_bot.method(@listen_super_admin[cmd]).call(message, args) if @listen_super_admin.key? cmd
-            @per_chat_bot.method(@listen_admin[cmd]).call(message, args) if @listen_admin.key? cmd
-            @per_chat_bot.method(get_user_cmds[cmd]).call(message, args) if get_user_cmds.key? cmd
-        end
-
-        def listen_admin(message)
-            args = @per_chat_bot.get_text(message).split(" ").drop(1) # Array : ["cmd", "arg1", ...]
-            cmd = args.shift # cmd = "cdm" and args = ["arg1", ...]
-            cmd = "def_cmd" if cmd == nil
-            
-            @per_chat_bot.method(@listen_admin[cmd]).call(message, args) if @listen_admin.key? cmd
-            @per_chat_bot.method(@listen_user[cmd]).call(message, args) if @listen_user.key? cmd
-        end
-
-        def listen_user(message)
-            args = @per_chat_bot.get_text(message).split(" ").drop(1) # Array : ["cmd", "arg1", ...]
-            cmd = args.shift # cmd = "cdm" and args = ["arg1", ...]
-            cmd = "def_cmd" if cmd == nil
-
-            @per_chat_bot.method(get_user_cmds[cmd]).call(message, args) if get_user_cmds.key?(cmd)
-        end
-  
         def listen_adding_event(message)
             if message.kind_of? Telegram::Bot::Types::CallbackQuery
                 case message.data
@@ -300,5 +263,20 @@ class CalendarPerChatBot < PerChatBot
                 end
             end
         end
+
+        def add_event(message, args)
+            kbId = generate_ikb("Which class subject ?", (get_config["subjects"]+["Cancel"]).zip((get_config["subjects"]+["Cancel"])).each_slice(4).to_a)['result']['message_id']
+            @adding_event = {kbId: kbId.to_s}
+        end
+
+        def subscribe(message, args)
+            kb_subject = get_config["subjects"].collect { |sub| 
+                (get_config["subscribe"][sub.to_s].include? messsage.chat.id.to_s) ? sub += " \u{2713}" : sub
+            }
+            kb_content = (kb_subject).zip((get_config["subjects"])).each_slice(4).to_a + [[["Done", "Done"]]]
+            kbId = generate_ikb("Which subject do you want to subscribe to ?", kb_content)['result']['message_id']
+            @subscribe_event = {kbId: kbId.to_s, kb_content: kb_content}
+        end
+
     end
 end

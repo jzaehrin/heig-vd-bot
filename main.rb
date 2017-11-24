@@ -2,8 +2,6 @@ require 'rubygems'
 require 'telegram/bot'
 require 'json'
 require './calendar_per_chat_bot'
-require './calendar_bot'
-require './doge_bot'
 require './father_bot'
 require 'logger'
 

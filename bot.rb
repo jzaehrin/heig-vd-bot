@@ -54,14 +54,18 @@ class Bot
     def get_user_cmds
         @user_cmds
     end
-
-
+ 
     def user_usage
-        result = @listen_user.map{ |k, v| 
-            "<code>#{k}</code>
-#{eval "@@" + v.to_s + "_usage"}" if k!= "def_cmd"
+        get_user_cmds.map{ |k, v| 
+            "<code>#{k}</code>\n#{get_method_help(v)}" if k!= "def_cmd"
         }.drop(1).join("\n")
     end
+    
+    def get_method_help(methode_name)
+        "Override me !"
+        #eval "@@" + methode_name.to_s + "_usage"
+    end
+
     
     def usage_prefix
         "My prefix is '#{get_flag}'"
