@@ -5,9 +5,12 @@ class Bot
     abstract
     attr_reader :config_file, :flag
 
-    def initialize(config_path, name, father_bot, flag)
-        @id = father_bot.id
-        @api = father_bot.api
+    def initialize(config_path, name, father_bot = nil, flag = 'f')
+        unless father_bot.nil?
+            @id = father_bot.id
+            @api = father_bot.api
+        end
+        
         @flag = flag
         @name = name
         @config_file = config_path + @name + "." + @id + ".json" 
@@ -25,10 +28,6 @@ class Bot
         File.open(@config_file, "w") do |f|
             f.write(@config.to_json)
         end
-    end
-    
-    def name
-        "Calendar bot"
     end
     
     def get_id
@@ -57,11 +56,11 @@ class Bot
  
     def user_usage
         "<b>User usage:</b>" + get_user_cmds.map{ |k, v| 
-            "<code>#{k}</code>\n#{get_method_help(v)}" if k!= "def_cmd"
+            "<code>#{k}</code>\n#{get_method_usage(v)}" if k!= "def_cmd"
         }.drop(1).join("\n")
     end
     
-    def get_method_help(methode_name)
+    def get_method_usage(methode_name)
         "Override me !"
         #eval "@@" + methode_name.to_s + "_usage"
     end
@@ -127,7 +126,7 @@ class Bot
 
     def edit_ikb(chat_id, message_id, buttons_infos)
         kb = buttons_infos.collect { |row|  
-            row.collect { |button| Telegram::Bot::Types::InlineKeyboardButton.new(text: button.first, callback_data: button.last.to_s + " kbId:" + message_id.to_s)
+            row.collect { |button| Telegram::Bot::Types::InlineKeyboardButton.new(text: button.first, callback_data: button.last + " kbId:" + message_id.to_s)
             }
         }
         markup = Telegram::Bot::Types::InlineKeyboardMarkup.new(inline_keyboard: kb)
@@ -142,6 +141,14 @@ class Bot
         end
     end
 
+    def get_id_from_message(message)
+        if message.kind_of? Telegram::Bot::Types::CallbackQuery
+            message.from.id.to_s
+        else 
+            message.chat.id.to_s
+        end
+    end
+
     def destroy
         update_config
     end
@@ -149,12 +156,16 @@ class Bot
     #============Command to Functions
     @@help_usage = "- show this help message"
     def help(message, args)
-        chat_id = message.chat.id
+        chat_id = get_id_from_message(message)
         reponseHTML(chat_id, usage(chat_id)) 
     end
     
     def def_cmd(message, args)
         # only cmd without _usage
-        reponseHTML(message.chat.id, short_usage) 
+        reponseHTML(get_id_from_message(message), short_usage) 
+    end
+
+    def start(message, args)
+        #TODO generate an ikb with user commands / admin / s_amdin 
     end
 end

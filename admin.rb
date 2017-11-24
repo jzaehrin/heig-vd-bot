@@ -19,13 +19,13 @@ module Adminable
 
     def admin_usage
         "<b>Admin usage:</b>\n" + get_admin_cmds.map{ |k, v| 
-            "<code>#{k}</code>\n#{get_method_help(v)}"
+            "<code>#{k}</code>\n#{get_method_usage(v)}"
         }.join("\n")
     end  
 
     def super_admin_usage
         "<b>Super admin usage:</b>\n" + get_super_admin_cmds.map{ |k, v| 
-            "<code>#{k}</code>\n#{get_method_help(v)}"
+            "<code>#{k}</code>\n#{get_method_usage(v)}"
         }.join("\n")
     end  
 

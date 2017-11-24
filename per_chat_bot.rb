@@ -21,8 +21,7 @@ class PerChatBot < Bot
     end
 
     def listen(message)
-        chat_id = message.respond_to?('chat') ? message.chat.id : message.from.id
-        get_worker(chat_id).listen(message)   
+        get_worker(get_id_from_message(message)).listen(message)   
     end
 
     class Worker
@@ -55,6 +54,10 @@ class PerChatBot < Bot
 
         def get_api
             @per_chat_bot.get_api
+        end
+
+        def get_text(message)
+            @per_chat_bot.get_text(message)
         end
 
         def get_user_cmds

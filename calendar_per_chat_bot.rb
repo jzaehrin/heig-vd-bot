@@ -29,12 +29,15 @@ class CalendarPerChatBot < PerChatBot
         end
     end
 
+    def name
+        "Calendar bot"
+    end
  
     def new_worker(chat_id)
         @workers[chat_id] = CalendarWorker.new(chat_id, self)
     end
 
-    def get_method_help(methode_name)
+    def get_method_usage(methode_name)
         eval "@@" + methode_name.to_s + "_usage"
     end
 
@@ -68,10 +71,11 @@ class CalendarPerChatBot < PerChatBot
     def list(message, args)
         text = get_text(message).sub("ls","")
         if args.empty?
-            reponseHTML(message.chat.id, "<a href=\"http://rasp-heig.ddns.net/calendars/all.ics\">all.ics</a> :\n" + @all.list)
+            reponseHTML(get_id_from_message(message), "<a href=\"http://rasp-heig.ddns.net/calendars/all.ics\">all.ics</a> :\n" + @all.list)
         elsif !["admins","invitations"].include?(args[0])
-            if @calendars.key?(args[0].to_s.upcase!)
-                reponseHTML(message.chat.id, "<a href=\"http://rasp-heig.ddns.net/calendars/#{args[0]}.ics\">#{args[0]}.ics</a> :\n" + @calendars[args[0]].list)
+            args[0].to_s.upcase!
+            if @calendars.key?(args[0])
+                reponseHTML(get_id_from_message(message), "<a href=\"http://rasp-heig.ddns.net/calendars/#{args[0]}.ics\">#{args[0]}.ics</a> :\n" + @calendars[args[0]].list)
             else
                 reponse(args[0] + " doesn't correspond to any calendar in the system.")
             end
@@ -120,7 +124,7 @@ class CalendarPerChatBot < PerChatBot
             elsif !@subscribe_event.empty?
                 listen_subscribe_event(message)
             else
-                args = @per_chat_bot.get_text(message).split(" ").drop(1) # Array : ["cmd", "arg1", ...]
+                args = get_text(message).split(" ").drop(1) # Array : ["cmd", "arg1", ...]
                 cmd = args.shift # cmd = "cdm" and args = ["arg1", ...]
                 cmd = "def_cmd" if cmd == nil
 
@@ -133,7 +137,6 @@ class CalendarPerChatBot < PerChatBot
                 end
 
                 exec_cmd(get_user_cmds[cmd], message, args) if get_user_cmds.key? cmd
-
             end
         end
 

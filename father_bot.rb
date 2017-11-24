@@ -9,8 +9,7 @@ class FatherBot  < Bot
         @id = id
         @logger = logger
         @bots = Array.new
-        @api
-        super(config_path, "default", self, "f")
+        super(config_path, "default")
         @token = @config["token"]
         run
     end
@@ -18,12 +17,16 @@ class FatherBot  < Bot
     def add_bot(*bots)
         @bots.concat bots
     end
+    
+    def name
+        "Father bot"
+    end
 
     def usage(chat_id)
         usage_bots = Array.new.concat(@bots.map{|bot| bot.name + ":\n" + bot.short_usage})
 
         <<~HEREDOC
-            I'm the father of all Bot :
+            I'm the father in control of all bots:
             - /help print this help
             #{usage_bots.join('\n')}
         HEREDOC
@@ -40,8 +43,8 @@ class FatherBot  < Bot
         begin
             @logger.info('listen') { "Start listening for messages..." }
             @bot.listen do |message|
-                @logger.debug('listen') { "Get message : \"#{message}\", dispatch." }
-                text = message.respond_to?(:text) ? message.text : message.data
+                text = get_text(message)
+                @logger.debug('listen') { "Get message : \"#{text}\", dispatch." }
                 # catch string "q" to abort any ongoing operation
                 if text == 'q'
                     @bots.each do |bot|
@@ -67,7 +70,7 @@ class FatherBot  < Bot
 
                     unless foundFlag 
                         @logger.debug('listen') { "Dispatched to \"father bot\"." }
-                        listen_father(text, message.chat.id)
+                        listen_father(text, get_id_from_message(message))
                     end
                 end
             end
@@ -78,7 +81,7 @@ class FatherBot  < Bot
         rescue StandardError => e
             @logger.error('Response Error') { "Api say : #{e.message}" }
             if e.message.include? "cde" then listen
-            else close
+            else close end
         end
     end
 
@@ -86,6 +89,11 @@ class FatherBot  < Bot
         case text
         when /\/help/
             reponseHTML(chat_id, usage(chat_id))
+        when /\/start/
+            buttons = Array.new(@bots.map{ |bot| [[bot.name,"/" + bot.get_flag + " start"]] }) << [["Cancel", "Cancel"]]
+            generate_ikb(chat_id, "Choose a bot to work with:", buttons)
+        when /Cancel kbId:([0-9]+)/
+            delete_message(chat_id, $1)
         end
     end
 
@@ -97,3 +105,4 @@ class FatherBot  < Bot
         destroy
     end
 end
+
