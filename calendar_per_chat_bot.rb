@@ -70,7 +70,7 @@ class CalendarPerChatBot < PerChatBot
         if args.empty?
             reponseHTML(message.chat.id, "<a href=\"http://rasp-heig.ddns.net/calendars/all.ics\">all.ics</a> :\n" + @all.list)
         elsif !["admins","invitations"].include?(args[0])
-            if @calendars.key?(args[0])
+            if @calendars.key?(args[0].to_s.upcase!)
                 reponseHTML(message.chat.id, "<a href=\"http://rasp-heig.ddns.net/calendars/#{args[0]}.ics\">#{args[0]}.ics</a> :\n" + @calendars[args[0]].list)
             else
                 reponse(args[0] + " doesn't correspond to any calendar in the system.")

@@ -7,26 +7,26 @@ module Adminable
                             "rm_admin" => :rm_admin, "rm_invitation" => :rm_invitation, "revoke" => :revoke}
   
     def usage(chat_id)
-        usage_txt = user_usage
-        usage_txt += admin_usage if admin? chat_id
-        usage_txt += super_admin_usage if super_admin? chat_id
+        usage = user_usage
+        usage += "\n" + admin_usage if admin? chat_id
+        usage += "\n" + super_admin_usage if super_admin? chat_id
         <<~HEREDOC
                 Help for <b>#{name}</b> :
                 #{usage_prefix}
-                #{usage_txt}
+                #{usage}
         HEREDOC
     end
 
     def admin_usage
-        get_admin_cmds.map{ |k, v| 
+        "<b>Admin usage:</b>\n" + get_admin_cmds.map{ |k, v| 
             "<code>#{k}</code>\n#{get_method_help(v)}"
-        }.drop(1).join("\n")
+        }.join("\n")
     end  
 
     def super_admin_usage
-        get_super_admin_cmds.map{ |k, v| 
+        "<b>Super admin usage:</b>\n" + get_super_admin_cmds.map{ |k, v| 
             "<code>#{k}</code>\n#{get_method_help(v)}"
-        }.drop(1).join("\n")
+        }.join("\n")
     end  
 
     def admin?(chat_id)

@@ -2,7 +2,7 @@ require 'json'
 require 'abstraction'
 
 class FatherBot  < Bot
-    include Adminable
+    include Adminable # only include, do NOT want to override method :usage
     attr_reader :id, :api
 
     def initialize(config_path, id, logger)       
@@ -77,7 +77,8 @@ class FatherBot  < Bot
             close           
         rescue StandardError => e
             @logger.error('Response Error') { "Api say : #{e.message}" }
-            listen
+            if e.message.include? "cde" then listen
+            else close
         end
     end
 
