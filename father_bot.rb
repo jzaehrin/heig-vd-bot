@@ -71,13 +71,13 @@ class FatherBot  < Bot
                     end
                 end
             end
-        rescue SystemExit, Interrupt
+        #rescue SystemExit, Interrupt
             #Destroy bots
-            @logger.warn('System interrupt') { "A SINGTERM has been catched. Destroying bots and father bot..." }
-            close           
-        rescue StandardError => e
-            @logger.error('Response Error') { "Api say : #{e.message}" }
-            close
+        #    @logger.warn('System interrupt') { "A SINGTERM has been catched. Destroying bots and father bot..." }
+        #    close           
+        #rescue StandardError => e
+        #    @logger.error('Response Error') { "Api say : #{e.message}" }
+        #    close
         end
     end
 

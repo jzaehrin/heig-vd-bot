@@ -7,7 +7,7 @@ class CalendarPerChatBot < PerChatBot
    
     CONF_MIN = {"super_admin":"","admins":{},"invited_admin":{},"subjects":[],"channel":"0","subscribe":{}}
     
-    attr_accessor :calendars, :config, :all, :channel
+    attr_accessor :calendars, :config, :all, :channel, :listen_user, :listen_admin, :listen_super_admin
 
     def initialize(config_path, father_bot)
         super(config_path, "calendar", father_bot, "c")
@@ -15,6 +15,9 @@ class CalendarPerChatBot < PerChatBot
         @all = Calendar.new('all', Array.new())
         @calendars = @config["subjects"].map{|sub| [ sub , Calendar.new( sub, [@all] ) ] }.to_h
         @channel = @config["channel"]
+        @user_cmds = @user_cmds.merge({"ls" => :list, "subscribe" => :subscribe}).merge(@@listen_user)
+        @listen_admin = @@listen_admin.merge({"add_event" => :add_event})
+        @listen_super_admin = @@listen_super_admin
     end
 
     def check_conf
@@ -25,85 +28,18 @@ class CalendarPerChatBot < PerChatBot
             unless @config["subscribe"].key? sub.to_s then @config["subscribe"][sub.to_s] = [] end
         end
     end
+    
+    def user_usage
+        result = get_user_cmds.map{ |k, v| 
+            "<code>#{k}</code>
+#{eval "@@" + v.to_s + "_usage"}" if k!= "def_cmd"
+        }.drop(1).join("\n")
+    end
 
     def new_worker(chat_id)
         @workers[chat_id] = CalendarWorker.new(chat_id,self)
     end
-
-    def name
-        "Calendar bot"
-    end
     
-    def usage_prefix
-        "My prefix is '#{@flag}'"
-    end
-
-    def short_usage
-        "- #{usage_prefix} and you can show my help with '/#{@flag} help'"
-    end
-
-    def super_admin_usage
-        <<~HEREDOC
-            <b>Super admin usage:</b>
-            <code> add_admin USER</code>
-            - return a key to promote "USER" (without @) as admin
-            <code> is_admin USER</code>
-            - tell if "USER" (without @) is admin or not 
-            <code> ls PARAM</code>
-            - "PARAM" can take "admins" to lists all admins
-            - or "invitations" to lists all invitations
-            - see <code>ls</code> form <i>user usage</i>
-            <code> remove_admin USER</code>
-            - remove "USER" (without @) from admin list
-            <code> remove_invitation USER</code>
-            - remove the invitation for "USER" (without @) 
-            <code> revoke</code>
-            - revoke the current super admin
-            - see <code>init</code> from <i>user usage</i>
-        HEREDOC
-    end
-
-    def admin_usage
-        <<~HEREDOC
-            <b>Admin usage:</b>
-            <code> add_event</code>
-            - start the adding event procedure
-        HEREDOC
-    end
-
-    def user_usage
-        <<~HEREDOC
-            <b>User usage:</b>
-            <code> admin KEY</code> 
-            - promote yourself as admin of this bot
-            <code> chan</code>
-            - show the broadcast channel id
-            <code> init</code>
-            - you will become super admin if there is none
-            <code> ls CAL</code>
-            - lists the content of the calendar "CAL"
-            - lists the main calendar if "CAL" isn't specified
-            <code subscribe</code>
-            - Manage our calendar's subscribe
-                -> Subscribe to a calendar show you all updates on it
-            <code> help</code>
-            - show this help message
-        HEREDOC
-    end
-
-    def usage(chat_id)
-        usage = user_usage
-        usage += admin_usage if admin? chat_id.to_s
-        usage += super_admin_usage if super_admin? chat_id.to_s
-
-        <<~HEREDOC
-            Help for <b>#{name}</b> :
-            #{usage_prefix}
-            #{usage}
-        HEREDOC
-
-    end
-
     def toggle_subscribe(chat_id, calendar)
         if @config["subscribe"][calendar.to_s].include? chat_id.to_s
             @config["subscribe"][calendar.to_s].delete chat_id.to_s
@@ -130,7 +66,38 @@ class CalendarPerChatBot < PerChatBot
         month_header + [['Mon','Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].zip([' ']*7)] + days_woffset.zip(days_woffset.collect{|d| d.to_s+"."+month.to_s+"."+year.to_s}).each_slice(7).to_a + [[["Cancel","/#{@flag} Cancel"]]]
     end
 
+    @@add_event_usage = "- start an adding event procedure"
+    def add_event(message, args)
+        kbId = generate_ikb("Which class subject ?", (get_config["subjects"]+["Cancel"]).zip((get_config["subjects"]+["Cancel"])).each_slice(4).to_a)['result']['message_id']
+        @adding_event = {kbId: kbId.to_s}
+    end
+
+    @@list_usage = "- lists the content of the calendar \"CAL\"\n- lists the main calendar if \"CAL\" isn't specified"
+    def list(message, args)
+        text = get_text(message).sub("ls","")
+        if args.empty?
+            reponseHTML(message.chat.id, "<a href=\"http://rasp-heig.ddns.net/calendars/all.ics\">all.ics</a> :\n" + @all.list)
+        elsif !["admins","invitations"].include?(args[0])
+            if @calendars.key?(args[0])
+                reponseHTML(message.chat.id, "<a href=\"http://rasp-heig.ddns.net/calendars/#{args[0]}.ics\">#{args[0]}.ics</a> :\n" + @calendars[args[0]].list)
+            else
+                reponse(args[0] + " doesn't correspond to any calendar in the system.")
+            end
+        end
+    end
+
+    @@subscribe_usage = "- Manage our calendar's subscribe\n    -> Subscribe to a calendar show you all updates on it"
+    def subscribe(message, args)
+        kb_subject = get_config["subjects"].collect { |sub| 
+            (get_config["subscribe"][sub.to_s].include? messsage.chat.id.to_s) ? sub += " \u{2713}" : sub
+        }
+        kb_content = (kb_subject).zip((get_config["subjects"])).each_slice(4).to_a + [[["Done", "Done"]]]
+        kbId = generate_ikb("Which subject do you want to subscribe to ?", kb_content)['result']['message_id']
+        @subscribe_event = {kbId: kbId.to_s, kb_content: kb_content}
+    end
+
     class CalendarWorker < PerChatBot::Worker
+
         def initialize(chat_id, per_chat_bot)
             super(chat_id, per_chat_bot)
             @adding_event = Hash.new
@@ -152,6 +119,18 @@ class CalendarPerChatBot < PerChatBot
         def create_calendar_ikb(month, year)
             @per_chat_bot.create_calendar_ikb(month, year)
         end
+        
+        def usage(chat_id)
+            usage = user_usage
+            usage += admin_usage if admin?
+            usage += super_admin_usage if super_admin?
+
+            <<~HEREDOC
+                Help for <b>#{name}</b> :
+                #{usage_prefix}
+                #{usage}
+            HEREDOC
+        end
 
         def listen(message)
             if !@adding_event.empty?
@@ -159,127 +138,42 @@ class CalendarPerChatBot < PerChatBot
             elsif !@subscribe_event.empty?
                 listen_subscribe_event(message)
             else
-                super(message)
-            end
-        end
-
-        def listen_text(message)
-            if super_admin?
-                listen_super_admin(message)
-            elsif admin?
-                listen_admin(message)
-            else
-                listen_user(message)
+                if super_admin?
+                    listen_super_admin(message)
+                elsif admin?
+                    listen_admin(message)
+                else
+                    listen_user(message)
+                end
             end
         end
 
         def listen_super_admin(message)
-            case message.text
-            when /ls (.+)/
-                case $1
-                when 'admins'
-                    text = "Admins list:\nusername\tchat_id\n"
-                    @per_chat_bot.list_admins().each{|admin| text+= admin.first + "\t" + admin.last + "\n"}
-                    reponse(text)
-                when 'invitations'
-                    text = "Admins invitations list:\nusername\tchat_id\n" + @per_chat_bot.list_invited_admin().to_s
-                    reponse(text)
-                else
-                    listen_user(message)
-                end
-            when /is_admin (.+)/ # test with chat id
-                case $1
-                when /^(\d+)/
-                    reponse(@per_chat_bot.admin?($1))
-                when /^([a-zA-Z0-9]{4,})/ # test with username
-                    reponse(@per_chat_bot.username_admin?($1))
-                end
-            when /add_admin ([a-zA-Z0-9]{4,})/ 
-                o = [('a'..'z'), ('A'..'Z'), (0..9)].map(&:to_a).flatten
-                password = (0...8).map { o[rand(o.length)] }.join
-                @per_chat_bot.add_admin($1,password)
-                reponse("#$1 invited with key #{password.to_s}.")
-            when /remove_invitation ([a-zA-Z0-9]{4,})/
-                if @per_chat_bot.remove_invited_admin($1) 
-                    reponse("#$1 invitation removed.")
-                else
-                    reponse("#$1 wasn't on the list!")
-                end
-            when /remove_admin ([a-zA-Z0-9]{4,})/
-                if @per_chat_bot.remove_admin($1) 
-                    reponse("#$1 is not an admin anymore.")
-                else
-                    reponse("#$1 wasn't on the admins list!")
-                end
-            when 'revoke'
-                @per_chat_bot.remove_super_admin()
-            else
-                listen_admin(message)
-            end
+            args = @per_chat_bot.get_text(message).split(" ").drop(1) # Array : ["cmd", "arg1", ...]
+            cmd = args.shift # cmd = "cdm" and args = ["arg1", ...]
+            cmd = "def_cmd" if cmd == nil
+            @per_chat_bot.method(@listen_super_admin[cmd]).call(message, args) if @listen_super_admin.key? cmd
+            @per_chat_bot.method(@listen_admin[cmd]).call(message, args) if @listen_admin.key? cmd
+            @per_chat_bot.method(get_user_cmds[cmd]).call(message, args) if get_user_cmds.key? cmd
         end
 
         def listen_admin(message)
-            case message.text
-#---------- STEP 1: ask for a subject
-            when /add_event/
-                kbId = generate_ikb("Which class subject ?", (@per_chat_bot.config["subjects"]+["Cancel"]).zip((@per_chat_bot.config["subjects"]+["Cancel"])).each_slice(4).to_a)['result']['message_id']
-                @adding_event = {kbId: kbId.to_s}
-            else
-                listen_user(message)
-            end
+            args = @per_chat_bot.get_text(message).split(" ").drop(1) # Array : ["cmd", "arg1", ...]
+            cmd = args.shift # cmd = "cdm" and args = ["arg1", ...]
+            cmd = "def_cmd" if cmd == nil
+            
+            @per_chat_bot.method(@listen_admin[cmd]).call(message, args) if @listen_admin.key? cmd
+            @per_chat_bot.method(@listen_user[cmd]).call(message, args) if @listen_user.key? cmd
         end
 
         def listen_user(message)
-            case message.text
-            when '/' + @per_chat_bot.flag
-                reponse(@per_chat_bot.short_usage)
-            when /help/
-                reponseHTML(@per_chat_bot.usage(@chat_id))
-            when /init/
-                unless has_super_admin?
-                    @per_chat_bot.set_super_admin(@chat_id)
-                    reponse("Congrats! You're now the super admin of this bot.")
-                else
-                    reponse("This bot has already been initialize.")
-                end
-            when /admin ([a-zA-Z0-9]{8})/
-                if admin?
-                    reponse("You already are an admin for this bot ;) !")
-                else
-                    if @per_chat_bot.match_admin(@chat_id.to_s,message.from.username.to_s,$1.to_s)
-                        reponse("Congrats! You're now a admin of this bot.")
-                    else
-                        reponse("Sorry, but you were not invited to become an admin of this bot.")
-                    end
-                end
-            when /ls(.*)?/
-                case $1
-                when /^ (.*)/
-                    if @per_chat_bot.calendars.key?($1)
-                        reponseHTML("<a href=\"http://rasp-heig.ddns.net/calendars/#$1.ics\">#$1.ics</a> :\n" + @per_chat_bot.calendars[$1].list)
-                    else
-                        reponse($1 + " doesn't correspond to any calendar in the system.")
-                    end
-                else
-                    reponseHTML("<a href=\"http://rasp-heig.ddns.net/calendars/all.ics\">all.ics</a> :\n" + @per_chat_bot.all.list)
-                end
-            when /subscribe/
-                kb_subject = @per_chat_bot.config["subjects"].collect { |sub| 
-                    (@per_chat_bot.config["subscribe"][sub.to_s].include? @chat_id.to_s) ? sub += " \u{2713}" : sub
-                }
-                kb_content = (kb_subject).zip((@per_chat_bot.config["subjects"])).each_slice(4).to_a + [[["Done", "Done"]]]
-                kbId = generate_ikb("Which subject do you want to subscribe to ?", kb_content)['result']['message_id']
-                @subscribe_event = {kbId: kbId.to_s, kb_content: kb_content}
-            end
+            args = @per_chat_bot.get_text(message).split(" ").drop(1) # Array : ["cmd", "arg1", ...]
+            cmd = args.shift # cmd = "cdm" and args = ["arg1", ...]
+            cmd = "def_cmd" if cmd == nil
+
+            @per_chat_bot.method(get_user_cmds[cmd]).call(message, args) if get_user_cmds.key?(cmd)
         end
   
-        def listen_callback(message)
-            case message.data
-            when 'test'
-                reponse("ko")
-            end
-        end
-
         def listen_adding_event(message)
             if message.kind_of? Telegram::Bot::Types::CallbackQuery
                 case message.data
