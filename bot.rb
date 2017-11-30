@@ -15,7 +15,7 @@ class Bot
         @name = name
         @config_file = config_path + @name + "." + @id + ".json" 
         @Markup_empty = Telegram::Bot::Types::InlineKeyboardMarkup.new(inline_keyboard: [])
-        @user_cmds = {"def_cmd" => :def_cmd, "help" => :help}
+        @user_cmds = {"def_cmd" => :def_cmd, "help" => :help, "start" => :start}
         
         load_config()
     end
@@ -160,12 +160,15 @@ class Bot
         reponseHTML(chat_id, usage(chat_id)) 
     end
     
+    @@start_usage = "- display an inline keyboard with basics commands"
+    def start(message, args)
+        chat_id = get_id_from_message(message)
+        buttons = Array.new(@user_cmds.map{ |cmd, mtd| [[cmd, "/" + mtd ]] }) << [["Cancel", "Cancel"]]
+        generate_ikb(chat_id, name + ", run a command:", buttons)
+    end
+    
     def def_cmd(message, args)
         # only cmd without _usage
         reponseHTML(get_id_from_message(message), short_usage) 
-    end
-
-    def start(message, args)
-        #TODO generate an ikb with user commands / admin / s_amdin 
     end
 end

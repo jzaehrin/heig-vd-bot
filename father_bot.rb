@@ -80,7 +80,7 @@ class FatherBot  < Bot
             close           
         rescue StandardError => e
             @logger.error('Response Error') { "Api say : #{e.message}" }
-            if e.message.include? "cde" then listen
+            if e.message.include? "502" then listen
             else close end
         end
     end
