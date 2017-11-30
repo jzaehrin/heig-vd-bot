@@ -163,8 +163,10 @@ class Bot
     @@start_usage = "- display an inline keyboard with basics commands"
     def start(message, args)
         chat_id = get_id_from_message(message)
-        buttons = Array.new(@user_cmds.map{ |cmd, mtd| [[cmd, "/" + mtd ]] }) << [["Cancel", "Cancel"]]
-        generate_ikb(chat_id, name + ", run a command:", buttons)
+        buttons = Array.new(get_user_cmds.drop(1).map{ |cmd, mtd| [cmd, "/" + get_flag + " " + cmd ] })
+        nb_slices = 4
+        buttons = buttons.fill([" "," "], buttons.size, nb_slices - buttons.size % nb_slices).each_slice(nb_slices).to_a << [["Cancel", "Cancel"]]
+        generate_ikb(chat_id, get_name + ", run a command:", buttons)
     end
     
     def def_cmd(message, args)

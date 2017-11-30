@@ -30,6 +30,7 @@ class PerChatBot < Bot
         def initialize(chat_id, per_chat_bot)
             @chat_id = chat_id
             @per_chat_bot = per_chat_bot
+            @start_ikb = nil
         end
 
         def user_usage
@@ -62,6 +63,10 @@ class PerChatBot < Bot
 
         def get_user_cmds
             @per_chat_bot.get_user_cmds
+        end
+
+        def get_id_from_message message
+            @per_chat_bot.get_id_from_message message
         end
 
         def listen(message)
@@ -119,6 +124,18 @@ class PerChatBot < Bot
             else
                 @per_chat_bot.method(method).call(message, args)
             end
+        end
+        
+        def start(message, args) #overriding start cmd
+
+            chat_id = get_id_from_message(message)
+            buttons = get_user_cmds.keys.drop(1)
+            buttons = buttons.zip buttons
+            nb_slices = 4
+            buttons = buttons.fill([" "," "], buttons.size, nb_slices - buttons.size % nb_slices).each_slice(nb_slices).to_a << [["Cancel", "Cancel"]]
+            delete_message(@start_ikb) unless @start_ikb.nil?
+            
+            @start_ikb = generate_ikb(get_name + ", run a command:", buttons)["result"]["message_id"].to_s
         end
     end
 end

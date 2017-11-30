@@ -77,7 +77,7 @@ class CalendarPerChatBot < PerChatBot
             if @calendars.key?(args[0])
                 reponseHTML(get_id_from_message(message), "<a href=\"http://rasp-heig.ddns.net/calendars/#{args[0]}.ics\">#{args[0]}.ics</a> :\n" + @calendars[args[0]].list)
             else
-                reponse(args[0] + " doesn't correspond to any calendar in the system.")
+                reponse(get_id_from_message(message), args[0] + " doesn't correspond to any calendar in the system.")
             end
         end
     end

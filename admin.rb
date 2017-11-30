@@ -110,7 +110,7 @@ module Adminable
 #user
     @@become_admin_usage = ""
     def become_admin(message, args)
-        chat_id = message.chat.id.to_s
+        chat_id = get_id_from_message(message)
         if admin?(chat_id)
             reponse(chat_id, "You already are an admin for this bot ;) !")
         else
@@ -124,10 +124,10 @@ module Adminable
 
     @@init_admin_usage = ""
     def init_admin(message, args)
-        chat_id = message.chat.id
+        chat_id = get_id_from_message(message)
         unless has_super_admin?
             set_super_admin(chat_id)
-            get_config["admins"][message.from.username.to_s] = chat_id.to_s
+            get_config["admins"][message.from.username.to_s] = chat_id
             reponse(chat_id, "Congrats! You're now the super admin of this bot.")
         else
             reponse(chat_id, "This bot has already been initialize.")
@@ -141,13 +141,13 @@ module Adminable
             o = [('a'..'z'), ('A'..'Z'), (0..9)].map(&:to_a).flatten
             password = (0...8).map { o[rand(o.length)] }.join
             add_admin(args[0],password)
-            reponse(message.chat.id, "#{args[0]} invited with key #{password.to_s}.")
+            reponse(get_id_from_message(message), "#{args[0]} invited with key #{password.to_s}.")
         end
     end
 
     @@is_admin_usage = "- tell if \"USER\" (without @) is admin or not" 
     def is_admin(message, args)
-        chat_id = message.chat.id
+        chat_id = get_id_from_message(message)
         unless args.empty?
             case args[0]
             when /^(\d+)$/
@@ -160,7 +160,7 @@ module Adminable
 
     @@ls_admin_usage = "- \"PARAM\" can take \"admins\" to lists all admins\n- or \"invitations\" to lists all invitations\n- see <code>ls</code> form <i>user usage</i>"
     def ls_admin(message, args)
-        chat_id = message.chat.id
+        chat_id = get_id_from_message(message)
         unless args.empty?
             case args[0] 
             when 'admins'
@@ -176,7 +176,7 @@ module Adminable
 
     @@rm_admin_usage = "- remove \"USER\" (without @) from admin list"
     def rm_admin(message, args)
-        chat_id = message.chat.id
+        chat_id = get_id_from_message(message)
         unless args.empty?
             if remove_admin(args[0]) 
                 reponse(chat_id, "#{args[0]} is not an admin anymore.")
