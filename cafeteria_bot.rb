@@ -1,3 +1,5 @@
+require './bot'
+
 class DogeBot < Bot
 
     def initialize(api)
