@@ -126,6 +126,7 @@ class PerChatBot < Bot
             end
         end
         
+        #============Command to Functions
         def start(message, args) #overriding start cmd
 
             chat_id = get_id_from_message(message)
