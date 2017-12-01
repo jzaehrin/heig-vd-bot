@@ -6,6 +6,7 @@ class PerChatBot < Bot
 
     def initialize(config_path, config_name, father_bot, flag)
         super(config_path, config_name, father_bot, flag)
+        @user_cmds["private_del_ikb"] = :del_ikb
         @workers = Hash.new
     end
 
@@ -30,7 +31,7 @@ class PerChatBot < Bot
         def initialize(chat_id, per_chat_bot)
             @chat_id = chat_id
             @per_chat_bot = per_chat_bot
-            @start_ikb = nil
+            @unique_ikb = nil
         end
 
         def user_usage
@@ -127,16 +128,23 @@ class PerChatBot < Bot
         end
         
         #============Command to Functions
+        def del_ikb(message = nil, args = nil)
+            unless @unique_ikb.nil?
+                delete_message @unique_ikb
+                @unique_ikb = nil
+            end
+        end
+
         def start(message, args) #overriding start cmd
 
             chat_id = get_id_from_message(message)
-            buttons = get_user_cmds.keys.drop(1)
+            buttons = get_user_cmds.keys.drop(1).reject{ |cmd| cmd.start_with? "private" }
             buttons = buttons.zip buttons
             nb_slices = 4
-            buttons = buttons.fill([" "," "], buttons.size, nb_slices - buttons.size % nb_slices).each_slice(nb_slices).to_a << [["Cancel", "Cancel"]]
-            delete_message(@start_ikb) unless @start_ikb.nil?
+            buttons = buttons.fill([" "," "], buttons.size, nb_slices - buttons.size % nb_slices).each_slice(nb_slices).to_a << [["Cancel", "private_del_ikb"]]
+            delete_message(@unique_ikb) unless @unique_ikb.nil?
             
-            @start_ikb = generate_ikb(get_name + ", run a command:", buttons)["result"]["message_id"].to_s
+            @unique_ikb = generate_ikb(get_name + ", run a command:", buttons)["result"]["message_id"].to_s
         end
     end
 end

@@ -68,20 +68,6 @@ class CalendarPerChatBot < PerChatBot
     end
 
     @@list_usage = "- lists the content of the calendar \"CAL\"\n- lists the main calendar if \"CAL\" isn't specified"
-    def list(message, args)
-        text = get_text(message).sub("ls","")
-        if args.empty?
-            reponseHTML(get_id_from_message(message), "<a href=\"http://rasp-heig.ddns.net/calendars/all.ics\">all.ics</a> :\n" + @all.list)
-        elsif !["admins","invitations"].include?(args[0])
-            args[0].to_s.upcase!
-            if @calendars.key?(args[0])
-                reponseHTML(get_id_from_message(message), "<a href=\"http://rasp-heig.ddns.net/calendars/#{args[0]}.ics\">#{args[0]}.ics</a> :\n" + @calendars[args[0]].list)
-            else
-                reponse(get_id_from_message(message), args[0] + " doesn't correspond to any calendar in the system.")
-            end
-        end
-    end
-    
     @@add_event_usage = "- start an adding event procedure"
     @@subscribe_usage = "- Manage our calendar's subscribe\n    -> Subscribe to a calendar show you all updates on it"
 
@@ -274,12 +260,32 @@ class CalendarPerChatBot < PerChatBot
 
         def subscribe(message, args)
             kb_subject = get_config["subjects"].collect { |sub| 
-                (get_config["subscribe"][sub.to_s].include? messsage.chat.id.to_s) ? sub += " \u{2713}" : sub
+                (get_config["subscribe"][sub.to_s].include? get_id_from_message(messsage)) ? sub += " \u{2713}" : sub
             }
             kb_content = (kb_subject).zip((get_config["subjects"])).each_slice(4).to_a + [[["Done", "Done"]]]
             kbId = generate_ikb("Which subject do you want to subscribe to ?", kb_content)['result']['message_id']
             @subscribe_event = {kbId: kbId.to_s, kb_content: kb_content}
         end
 
+        def list(message, args)
+            text = get_text(message).sub("ls","")
+            if args.empty?
+                kb_subject = get_config["subjects"] 
+                kb_content = (kb_subject).zip((kb_subject.map{ |sub| "ls " + sub })).each_slice(4).to_a + [[["All", "ls all"],["Cancel", "private_del_ikb"]]]
+                del_ikb
+                @unique_ikb = generate_ikb("Choose a subject to display the corresponding calendar's content:", kb_content)['result']['message_id']
+                    
+            elsif !["admins","invitations"].include?(args[0])
+                args[0].to_s.upcase!
+                if @per_chat_bot.calendars.key?(args[0])
+                    reponseHTML("<a href=\"http://rasp-heig.ddns.net/calendars/#{args[0]}.ics\">#{args[0]}.ics</a> :\n" + @per_chat_bot.calendars[args[0]].list)
+                elsif args[0] == "ALL"
+                    reponseHTML("<a href=\"http://rasp-heig.ddns.net/calendars/all.ics\">all.ics</a> :\n" + @per_chat_bot.all.list)
+                else
+                    reponse(args[0] + " doesn't correspond to any calendar in the system.")
+                end
+            end
+        end
+        
     end
 end
