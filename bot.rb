@@ -55,7 +55,7 @@ class Bot
     end
  
     def user_usage
-        "<b>User usage:</b>" + get_user_cmds.map{ |k, v| 
+        "<b>User usage:</b>\n" + get_user_cmds.map{ |k, v| 
             "<code>#{k}</code>\n#{get_method_usage(v)}" if k!= "def_cmd"
         }.drop(1).join("\n")
     end
