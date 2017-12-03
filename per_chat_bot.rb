@@ -138,10 +138,10 @@ class PerChatBot < Bot
         def start(message, args) #overriding start cmd
 
             chat_id = get_id_from_message(message)
-            buttons = get_user_cmds.keys.drop(1).reject{ |cmd| cmd.start_with? "private" }
+            buttons = get_user_cmds.keys.drop(1).reject{ |cmd| cmd.start_with?("private", "start")}
             buttons = buttons.zip buttons
             nb_slices = 4
-            buttons = buttons.fill([" "," "], buttons.size, nb_slices - buttons.size % nb_slices).each_slice(nb_slices).to_a << [["Cancel", "private_del_ikb"]]
+            buttons = buttons.fill([" "," "], buttons.size, (nb_slices - buttons.size % nb_slices) % nb_slices).each_slice(nb_slices).to_a << [["Cancel", "private_del_ikb"]]
             delete_message(@unique_ikb) unless @unique_ikb.nil?
             
             @unique_ikb = generate_ikb(get_name + ", run a command:", buttons)["result"]["message_id"].to_s

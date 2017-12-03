@@ -110,7 +110,13 @@ class CalendarPerChatBot < PerChatBot
             elsif !@subscribe_event.empty?
                 listen_subscribe_event(message)
             else
-                args = get_text(message).split(" ").drop(1) # Array : ["cmd", "arg1", ...]
+                if message.respond_to?('reply_to_message') && !message.reply_to_message.nil?
+                    text = get_text(message.reply_to_message)
+                else
+                    text = get_text(message)
+                end
+
+                args = text.split(" ").drop(1) # Array : ["cmd", "arg1", ...]
                 cmd = args.shift # cmd = "cdm" and args = ["arg1", ...]
                 cmd = "def_cmd" if cmd == nil
 
@@ -216,7 +222,7 @@ class CalendarPerChatBot < PerChatBot
                     @subscribe_event = Hash.new
                 when /([A-Z]+\d?)/ # step two : 
                     if @per_chat_bot.toggle_subscribe(@chat_id, $1) # if adding
-                        index = @per_chat_bot.config["subjects"].index($1.to_s)
+                        index = get_config["subjects"].index($1.to_s)
                         @subscribe_event[:kb_content][index / 4][index % 4][0] += " \u{2713}"
                         edit_ikb(@subscribe_event[:kbId].to_s, @subscribe_event[:kb_content])
                         text = "Add subscribe to #$1"
@@ -264,7 +270,9 @@ class CalendarPerChatBot < PerChatBot
             }
             kb_content = (kb_subject).zip((get_config["subjects"])).each_slice(4).to_a + [[["Done", "Done"]]]
             kbId = generate_ikb("Which subject do you want to subscribe to ?", kb_content)['result']['message_id']
-            @subscribe_event = {kbId: kbId.to_s, kb_content: kb_content}
+            pop_id = reponse("All changes will be saved automaticly.")['result']['message_id'] 
+
+            @subscribe_event = {kbId: kbId.to_s, kb_content: kb_content, pop_id: pop_id}
         end
 
         def list(message, args)

@@ -60,7 +60,11 @@ module Adminable
     def get_admin_cmds
         @admin_cmds
     end
-
+    
+    def get_user_cmds
+        if has_super_admin? then @user_cmds.reject{ |cmd| "init" == cmd }
+        else @user_cmds end
+    end
 
     def match_admin(chat_id, username, password)
         if get_config["invited_admin"].key?(username) && get_config["invited_admin"][username] == password
@@ -114,10 +118,21 @@ module Adminable
         if admin?(chat_id)
             reponse(chat_id, "You already are an admin for this bot ;) !")
         else
-            if !args.empty? && match_admin(chat_id, message.from.username.to_s, args[0].to_s)
-                reponse(chat_id, "Congrats! You're now a admin of this bot.")
+            key = nil
+            if message.respond_to?("reply_to_message") && !message.reply_to_message.nil?            
+                key = get_text(message).to_s
             else
-                reponse(chat_id, "Sorry, but you were not invited to become an admin of this bot.")
+                key = args[0].to_s unless args.empty?
+            end
+
+            unless key.nil?
+                if match_admin(chat_id, message.from.username.to_s, key)
+                    reponse(chat_id, "Congrats! You're now a admin of this bot.")
+                else 
+                    reponse(chat_id, "Sorry, but you used a wrong key, or were not invited to become an admin of this bot.")
+                end
+            else
+                reponse(chat_id, "/c admin\nPlease now insert the key that the super admin gave to you:", Telegram::Bot::Types::ForceReply.new(force_reply: true))
             end
         end
     end
