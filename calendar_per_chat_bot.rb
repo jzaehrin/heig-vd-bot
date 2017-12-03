@@ -260,7 +260,7 @@ class CalendarPerChatBot < PerChatBot
 
         def subscribe(message, args)
             kb_subject = get_config["subjects"].collect { |sub| 
-                (get_config["subscribe"][sub.to_s].include? get_id_from_message(messsage)) ? sub += " \u{2713}" : sub
+                (get_config["subscribe"][sub.to_s].include? get_id_from_message(message)) ? sub += " \u{2713}" : sub
             }
             kb_content = (kb_subject).zip((get_config["subjects"])).each_slice(4).to_a + [[["Done", "Done"]]]
             kbId = generate_ikb("Which subject do you want to subscribe to ?", kb_content)['result']['message_id']
