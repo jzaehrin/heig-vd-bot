@@ -53,6 +53,10 @@ class PerChatBot < Bot
         def get_name
             @per_chat_bot.get_name
         end
+        
+        def name
+            @per_chat_bot.name
+        end
 
         def get_api
             @per_chat_bot.get_api
@@ -141,10 +145,10 @@ class PerChatBot < Bot
             buttons = get_user_cmds.keys.drop(1).reject{ |cmd| cmd.start_with?("private", "start")}
             buttons = buttons.zip buttons
             nb_slices = 4
-            buttons = buttons.fill([" "," "], buttons.size, (nb_slices - buttons.size % nb_slices) % nb_slices).each_slice(nb_slices).to_a << [["Cancel", "private_del_ikb"]]
+            buttons = buttons.fill([" "," !nocommand!"], buttons.size, (nb_slices - buttons.size % nb_slices) % nb_slices).each_slice(nb_slices).to_a << [["Cancel", "private_del_ikb"]]
             delete_message(@unique_ikb) unless @unique_ikb.nil?
             
-            @unique_ikb = generate_ikb(get_name + ", run a command:", buttons)["result"]["message_id"].to_s
+            @unique_ikb = generate_ikb("Give an order to " + name + ":", buttons)["result"]["message_id"].to_s
         end
     end
 end
