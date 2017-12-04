@@ -116,8 +116,9 @@ class CalendarPerChatBot < PerChatBot
                     text = get_text(message)
                 end
 
-                args = text.split(" ").drop(1) # Array : ["cmd", "arg1", ...]
-                cmd = args.shift # cmd = "cdm" and args = ["arg1", ...]
+                args = text.split(" ")
+                args.shift if args[0] == "/" + get_flag # Array : ["cmd", "arg1", ...]
+                cmd = args.shift # cmd = "cmd" and args = ["arg1", ...]
                 cmd = "def_cmd" if cmd == nil
 
                 if super_admin?
